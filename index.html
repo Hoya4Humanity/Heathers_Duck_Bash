@@ -3,166 +3,516 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Heather's Duck Bash: Thunder Edition</title>
+    <title>Heather's Duck Bash | God-Mode SPA</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --river-speed: 18s; }
-        body { margin: 0; padding: 0; overflow: hidden; font-family: 'Press Start 2P', cursive; background: #050505; cursor: crosshair; user-select: none; }
-        #game-stage { position: relative; width: 100vw; height: 100vh; background: #0d2b1d; display: flex; justify-content: center; }
-        #river { position: relative; width: 75%; height: 100%; background-color: #154360; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 80px 80px; animation: scrollRiver var(--river-speed) linear infinite; overflow: hidden; border-left: 15px solid #0e351d; border-right: 15px solid #0e351d; }
-        @keyframes scrollRiver { from { background-position: 0 0; } to { background-position: 0 1000px; } }
+        :root {
+            --nes-blue: #0058f8;
+            --nes-red: #e40058;
+            --nes-yellow: #f8b800;
+            --cream: #fdfaf5;
+            --dark-coffee: #2d1b0d;
+        }
+
+        body {
+            margin: 0; padding: 0; overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: #000; color: #fff;
+        }
+
+        .pixel-font { font-family: 'Press Start 2P', cursive; }
+        
+        /* CRT Scanline Effect */
+        .crt-overlay::before {
+            content: " "; display: block; position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 500; background-size: 100% 4px, 3px 100%; pointer-events: none;
+        }
+
+        /* Screen Transitions */
+        .app-screen { display: none; min-height: 100vh; }
+        .app-screen.active { display: flex; flex-direction: column; }
+
+        .btn-nes {
+            background-color: var(--nes-yellow); color: #000;
+            padding: 14px 28px; border: 4px solid #fff;
+            box-shadow: 6px 6px 0 #444; cursor: pointer;
+        }
+        .btn-nes:active { transform: translate(4px, 4px); box-shadow: 0 0 0 #000; }
+
+        /* Chart Container */
+        .chart-container { position: relative; width: 100%; max-width: 500px; margin: auto; height: 320px; }
+
+        /* Game Engine Specifics */
+        #river {
+            position: relative; width: 80%; height: 100vh;
+            background-color: #2e86c1; border-left: 20px solid #1e3f20; border-right: 20px solid #1e3f20;
+            overflow: hidden;
+        }
+        .bank-flower { position: absolute; width: 6px; height: 10px; background: #2e86de; box-shadow: 0 -4px 0 #fff; z-index: 5; }
         .sprite { position: absolute; transform: translate(-50%, -50%); z-index: 20; pointer-events: none; }
-        .projectile { position: absolute; z-index: 30; pointer-events: none; filter: drop-shadow(0 6px 4px rgba(0,0,0,0.4)); }
-        #ui-panel { position: absolute; top: 15px; left: 15px; color: #fff; z-index: 100; background: rgba(0,0,0,0.7); padding: 12px; border: 2px solid #f1c40f; font-size: 10px; }
-        #weapon-dock { position: absolute; bottom: 20px; right: 20px; display: flex; gap: 10px; z-index: 100; }
-        .weapon-btn { width: 55px; height: 55px; background: #111; border: 3px solid #444; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; }
-        .weapon-btn.active { border-color: #f1c40f; background: #222; transform: scale(1.1); box-shadow: 0 0 15px #f1c40f; }
-        .weapon-btn.locked { opacity: 0.15; cursor: not-allowed; }
-        #boss-bar-container { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 350px; height: 15px; background: #000; border: 2px solid #fff; display: none; z-index: 101; }
-        #boss-hp { height: 100%; background: #e74c3c; width: 100%; transition: width 0.15s; }
-        .overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; color: white; text-align: center; }
-        .compact-box { background: rgba(255,255,255,0.95); color: #000; padding: 15px; border-radius: 4px; max-width: 400px; border: 4px solid #f1c40f; font-size: 12px; line-height: 1.4; }
-        .pixel-btn { background: #f1c40f; color: #000; padding: 10px 20px; border: 2px solid #000; cursor: pointer; font-size: 12px; margin-top: 15px; }
-        #boss-portrait { width: 140px; height: 140px; border: 3px solid #f1c40f; margin-bottom: 10px; background: #000; display: flex; align-items: center; justify-content: center; }
-        #level-toast { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #f1c40f; font-size: 20px; pointer-events: none; opacity: 0; z-index: 500; }
-        .toast-animate { animation: toastIn 1.5s ease-out forwards; }
-        @keyframes toastIn { 0% { opacity: 0; transform: translate(-50%, -20%); } 20% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, -80%); } }
+        .projectile { position: absolute; z-index: 30; pointer-events: none; }
+        
+        /* Effects */
+        .explosion { position: absolute; transform: translate(-50%, -50%); background: radial-gradient(circle, #ff9f43 0%, transparent 70%); border-radius: 50%; opacity: 0.8; z-index: 25; animation: explode 0.4s ease-out forwards; }
+        @keyframes explode { 0% { scale: 0.1; opacity: 1; } 100% { scale: 3.5; opacity: 0; } }
+        .dizzy-particle { position: absolute; font-size: 12px; pointer-events: none; z-index: 40; animation: float-up 1s ease-out forwards; }
+        @keyframes float-up { to { transform: translateY(-60px) rotate(360deg); opacity: 0; } }
+
+        /* Manual UI */
+        .manual-card { background: white; border: 4px solid var(--dark-coffee); box-shadow: 6px 6px 0 var(--dark-coffee); color: var(--dark-coffee); }
+        .tab-btn.active { background-color: var(--nes-red); color: white; border-color: var(--dark-coffee); }
+
+        #level-toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); color: #f1c40f; font-size: 30px; opacity: 0; z-index: 1000; text-shadow: 4px 4px 0 #000; pointer-events: none; }
+        .toast-animate { animation: toastIn 2s ease-out forwards; }
+        @keyframes toastIn { 0% { opacity: 0; transform: translate(-50%, 0%); } 20% { opacity: 1; transform: translate(-50%, -50%); } 80% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, -100%); } }
     </style>
 </head>
-<body>
-<div id="game-stage">
-    <div id="river"></div>
-    <div id="level-toast">LEVEL UP!</div>
-    <div id="ui-panel">
-        <div class="mb-1 text-yellow-500 uppercase">Heather's Duck Bash</div>
-        <div class="mb-1">SCORE: <span id="score-val">00000</span></div>
-        <div>LEVEL: <span id="level-val">1</span></div>
+<body class="crt-overlay">
+
+<!-- SECTION 1: NINTENDO HOME SCREEN -->
+<section id="screen-home" class="app-screen active items-center justify-center bg-[#0058f8] text-center p-6">
+    <div class="mb-10">
+        <h1 class="pixel-font text-3xl md:text-5xl mb-4 text-white drop-shadow-[6px_6px_0_#e40058]">HEATHER'S</h1>
+        <h2 class="pixel-font text-2xl md:text-4xl text-[#f8b800] drop-shadow-[4px_4px_0_#000]">DUCK BASH</h2>
     </div>
-    <div id="boss-bar-container">
-        <div id="boss-title" class="text-[8px] absolute -top-5 left-0 text-white uppercase">Boss</div>
-        <div id="boss-hp"></div>
+
+    <!-- The Mascot (Symbolic Representation) -->
+    <div class="mb-10 flex flex-col items-center">
+        <div class="w-48 h-48 bg-gray-900 border-4 border-white flex flex-col items-center justify-center relative shadow-2xl">
+            <div class="text-7xl mb-2">🤠</div>
+            <div class="flex gap-4">
+                <span class="text-3xl animate-bounce">🪠</span>
+                <span class="text-3xl">🦆</span>
+            </div>
+            <div class="absolute bottom-2 pixel-font text-[8px] text-yellow-400">FLORESVILLE HERO</div>
+        </div>
     </div>
-    <div id="weapon-dock">
-        <div class="weapon-btn active" id="btn-plunger">🪠</div>
-        <div class="weapon-btn locked" id="btn-tp">🧻</div>
-        <div class="weapon-btn locked" id="btn-turd">💩</div>
+
+    <div class="w-full max-w-sm space-y-6">
+        <input type="text" id="username-input" placeholder="ENTER THY NAME" 
+               class="w-full p-4 bg-black border-4 border-white text-white pixel-font text-center outline-none focus:border-nes-yellow">
+        
+        <div class="flex flex-col gap-4">
+            <button onclick="startGame()" class="btn-nes pixel-font text-sm uppercase tracking-widest">START MISSION</button>
+            <button onclick="showManual()" class="bg-white text-black p-3 pixel-font text-[10px] border-4 border-black uppercase">FIELD MANUAL</button>
+        </div>
     </div>
-</div>
-<div id="start-screen" class="overlay">
-    <div class="text-4xl mb-2 text-yellow-400">HEATHER'S</div>
-    <div class="text-2xl mb-8 text-white">DUCK BASH</div>
-    <input type="text" id="username-input" placeholder="NAME" class="bg-gray-800 text-white p-2 text-center border-2 border-yellow-500 mb-4 font-['Press_Start_2P'] text-[10px]" maxlength="10">
-    <button class="pixel-btn" id="start-btn">START MISSION</button>
-</div>
-<div id="ai-overlay" class="overlay" style="display:none;">
-    <div id="boss-portrait-container" style="display:none;"><div id="boss-portrait"></div></div>
-    <div class="compact-box">
-        <div class="text-[8px] text-gray-400 mb-1">THUNDER MALLARD</div>
-        <div id="ai-text">...</div>
-        <button id="resume-btn" class="pixel-btn" id="proc-btn">PROCEED</button>
+
+    <div class="mt-12 bg-black/40 p-4 border-t-2 border-white/20 w-full max-w-md">
+        <h3 class="pixel-font text-[8px] text-gray-300 mb-4 uppercase tracking-tighter">Current World Rankings</h3>
+        <div id="leaderboard-list" class="text-[10px] pixel-font space-y-2 text-yellow-400">
+            Fetching legends...
+        </div>
     </div>
-</div>
+</section>
+
+<!-- SECTION 2: INTERACTIVE FIELD MANUAL (SPA) -->
+<section id="screen-manual" class="app-screen bg-[#fdfaf5] p-6 md:p-12 text-[#2d1b0d]">
+    <div class="max-w-5xl mx-auto w-full">
+        <header class="flex justify-between items-center border-b-4 border-[#2d1b0d] pb-6 mb-10">
+            <div>
+                <h2 class="pixel-font text-xl text-nes-red">FIELD MANUAL</h2>
+                <p class="text-xs uppercase font-bold tracking-widest opacity-60">Tactical Intel & Weapon Analytics</p>
+            </div>
+            <button onclick="showHome()" class="pixel-font text-[10px] bg-black text-white p-3 border-2 border-white">EXIT</button>
+        </header>
+
+        <div class="flex gap-4 mb-10">
+            <button onclick="switchTab('tab-stats')" class="tab-btn active px-4 py-2 border-2 border-dark-coffee font-bold uppercase text-xs">Armory Stats</button>
+            <button onclick="switchTab('tab-bestiary')" class="tab-btn px-4 py-2 border-2 border-dark-coffee font-bold uppercase text-xs bg-white">Bestiary</button>
+        </div>
+
+        <!-- Tab: Stats -->
+        <div id="tab-stats" class="manual-tab block">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="chart-container manual-card p-4">
+                    <canvas id="weaponRadar"></canvas>
+                </div>
+                <div class="space-y-6">
+                    <h3 class="font-bold text-lg border-b-2 border-dark-coffee pb-2">TACTICAL OVERVIEW</h3>
+                    <p class="text-sm leading-relaxed">Balancing projectile speed against stun power is vital. The **Shroom** offers maximum boss disorientation, while the **Edibare** agent is the only reliable way to catch a fleeing Black Swan.</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-3 bg-white border-2 border-dark-coffee">
+                            <span class="text-xs font-bold uppercase block mb-1">AOE Damage</span>
+                            <div class="h-2 bg-gray-200 w-full"><div class="h-full bg-nes-red w-[90%]"></div></div>
+                        </div>
+                        <div class="p-3 bg-white border-2 border-dark-coffee">
+                            <span class="text-xs font-bold uppercase block mb-1">Stun Duration</span>
+                            <div class="h-2 bg-gray-200 w-full"><div class="h-full bg-nes-blue w-[75%]"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Bestiary -->
+        <div id="tab-bestiary" class="manual-tab hidden">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="manual-card p-4">
+                    <span class="text-4xl block mb-2">🦆</span>
+                    <h4 class="font-bold uppercase text-sm mb-2">Standard Duck</h4>
+                    <p class="text-xs opacity-70">1 HP. Moves in linear paths. Low threat level.</p>
+                </div>
+                <div class="manual-card p-4">
+                    <span class="text-4xl block mb-2">🦢🖤</span>
+                    <h4 class="font-bold uppercase text-sm mb-2">Black Swan</h4>
+                    <p class="text-xs opacity-70">5 HP. High speed. Bounces erratically off banks. Use slow items!</p>
+                </div>
+                <div class="manual-card p-4">
+                    <span class="text-4xl block mb-2">🦖⚡</span>
+                    <h4 class="font-bold uppercase text-sm mb-2">MythBoss</h4>
+                    <p class="text-xs opacity-70">Variable HP. Appear every even level. Immense size.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 3: THE GAME ENGINE -->
+<section id="screen-game" class="app-screen bg-[#4a6741] items-center">
+    <div id="level-toast">GOD MODE!</div>
+    
+    <div id="game-hud" class="absolute top-4 left-4 right-4 flex justify-between z-100 pointer-events-none">
+        <div class="bg-black/80 border-2 border-nes-yellow p-3 text-white pixel-font text-[8px] pointer-events-auto">
+            <div id="game-lives" class="text-nes-red text-sm mb-2">❤️❤️❤️</div>
+            <div>SCORE: <span id="game-score" class="text-nes-yellow">00000</span></div>
+            <div class="mt-1 uppercase">Lvl: <span id="game-level">1</span></div>
+        </div>
+        <div class="bg-black/80 border-2 border-white p-3 text-white pixel-font text-[8px] pointer-events-auto text-right">
+            <div class="mb-1 text-gray-400 uppercase">Ammunition</div>
+            <div>🧻 TP: <span id="ammo-tp">0</span></div>
+            <div>💩 TRD: <span id="ammo-turd">0</span></div>
+            <div>🧸 Slow: <span id="ammo-edibare">0</span></div>
+            <div>🍄 Stun: <span id="ammo-shroom">0</span></div>
+        </div>
+    </div>
+
+    <div id="river">
+        <div id="bank-flowers-left"></div>
+        <div id="bank-flowers-right"></div>
+    </div>
+
+    <div id="game-weapon-dock" class="absolute bottom-4 right-4 flex gap-2 z-100">
+        <div onclick="selectWeapon('plunger')" id="btn-w-plunger" class="weapon-btn active p-2 border-2 border-white bg-black/60 cursor-pointer">🪠</div>
+        <div onclick="selectWeapon('tp')" id="btn-w-tp" class="weapon-btn opacity-20 p-2 border-2 border-white bg-black/60 cursor-pointer">🧻</div>
+        <div onclick="selectWeapon('turd')" id="btn-w-turd" class="weapon-btn opacity-20 p-2 border-2 border-white bg-black/60 cursor-pointer">💩</div>
+        <div onclick="selectWeapon('edibare')" id="btn-w-edibare" class="weapon-btn opacity-20 p-2 border-2 border-white bg-black/60 cursor-pointer">🧸</div>
+        <div onclick="selectWeapon('shroom')" id="btn-w-shroom" class="weapon-btn opacity-20 p-2 border-2 border-white bg-black/60 cursor-pointer">🍄</div>
+    </div>
+
+    <!-- AI Narrative Overlay -->
+    <div id="game-narrative" class="absolute inset-0 bg-black/90 z-[1000] flex flex-col items-center justify-center p-10 hidden">
+        <div id="boss-portrait" class="w-40 h-40 border-4 border-nes-yellow mb-4 bg-gray-800 flex items-center justify-center"></div>
+        <div class="max-w-md bg-white text-black p-6 border-4 border-nes-red relative">
+            <div class="absolute -top-3 left-4 bg-nes-red text-white text-[8px] px-2 pixel-font">THUNDER MALLARD</div>
+            <p id="narrative-text" class="text-sm leading-relaxed">Hark, Heather! The river churns with destiny...</p>
+        </div>
+        <button onclick="closeNarrative()" class="pixel-btn bg-nes-yellow text-black p-3 mt-6 border-2 border-black pixel-font text-[10px]">RIDE ON</button>
+    </div>
+</section>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    const firebaseConfig = { apiKey: "AIzaSyD-dummy", authDomain: "null", projectId: "null", storageBucket: "null", messagingSenderId: "null", appId: "null" };
+    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = JSON.parse(__firebase_config);
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'heathers-duck-bash-final';
     const apiKey = ""; 
 
-    const river = document.getElementById('river');
-    const scoreVal = document.getElementById('score-val');
-    const levelVal = document.getElementById('level-val');
-    const bossBar = document.getElementById('boss-bar-container');
-    const bossHp = document.getElementById('boss-hp');
-    const aiText = document.getElementById('ai-text');
-    const usernameInput = document.getElementById('username-input');
+    // --- APP STATE ---
+    let user = null;
+    let gameState = {
+        score: 0, level: 1, lives: 3, active: false,
+        ammo: { tp: 0, turd: 0, edibare: 0, shroom: 0 },
+        currentWeapon: 'plunger',
+        ducks: [], projectiles: [], killsInLevel: 0,
+        userName: "HEATHER", audioCtx: null, musicStarted: false,
+        nextBoss: null
+    };
 
-    let state = { score: 0, level: 1, gameActive: false, ducks: [], projectiles: [], currentWeapon: 'plunger', boss: null, audioCtx: null, killsInLevel: 0, userName: "HEATHER", nextBossName: null };
+    // --- NAVIGATION ---
+    window.showManual = () => {
+        document.getElementById('screen-home').classList.remove('active');
+        document.getElementById('screen-manual').classList.add('active');
+        renderManualCharts();
+    };
+    window.showHome = () => {
+        document.getElementById('screen-manual').classList.remove('active');
+        document.getElementById('screen-home').classList.add('active');
+    };
+    window.switchTab = (tabId) => {
+        document.querySelectorAll('.manual-tab').forEach(t => t.classList.replace('block', 'hidden'));
+        document.getElementById(tabId).classList.replace('hidden', 'block');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'bg-nes-red', 'text-white'));
+        event.currentTarget.classList.add('active', 'bg-nes-red', 'text-white');
+    };
 
-    async function speak(text) {
-        if (!apiKey) return;
+    // --- GAME START ---
+    window.startGame = () => {
+        gameState.userName = document.getElementById('username-input').value.trim() || "HEATHER";
+        document.getElementById('screen-home').classList.remove('active');
+        document.getElementById('screen-game').classList.add('active');
+        initGameEngine();
+    };
+
+    // --- LEADERBOARD ---
+    const initAuth = async () => {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+            await signInAnonymously(auth);
+        }
+    };
+    initAuth();
+    onAuthStateChanged(auth, u => { user = u; if(u) fetchScores(); });
+
+    function fetchScores() {
+        const col = collection(db, 'artifacts', appId, 'public', 'data', 'scores');
+        onSnapshot(col, snap => {
+            let s = []; snap.forEach(d => s.push(d.data()));
+            s.sort((a,b) => b.score - a.score);
+            document.getElementById('leaderboard-list').innerHTML = s.slice(0, 5).map((e,i) => `<div>${i+1}. ${e.name} - ${e.score}</div>`).join('') || "NO LEGENDS YET";
+        });
+    }
+
+    async function pushScore() {
+        if(!user) return;
+        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'scores'), { name: gameState.userName, score: gameState.score, timestamp: Date.now() });
+    }
+
+    // --- AI & SOUND ---
+    function sfx(f, d, t='square', v=0.03) {
+        if(!gameState.audioCtx) return;
+        const o = gameState.audioCtx.createOscillator(), g = gameState.audioCtx.createGain();
+        o.type = t; o.frequency.setValueAtTime(f, gameState.audioCtx.currentTime);
+        g.gain.setValueAtTime(v, gameState.audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, gameState.audioCtx.currentTime + d);
+        o.connect(g); g.connect(gameState.audioCtx.destination);
+        o.start(); o.stop(gameState.audioCtx.currentTime + d);
+    }
+
+    async function triggerAI(isBoss = false) {
+        gameState.active = false;
+        document.getElementById('game-narrative').classList.remove('hidden');
+        const sys = "Thor-Cowboy persona from Floresville. Provide JSON: 'msg' (short string).";
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`, {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: `Say in the majestic, booming voice of Thor: ${text}` }] }], generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Fenrir" } } } } })
+                body: JSON.stringify({ contents: [{ parts: [{ text: isBoss ? "Boss coming." : "Weapon unlocked." }] }], systemInstruction: { parts: [{ text: sys }] }, generationConfig: { responseMimeType: "application/json" } })
             });
             const d = await res.json();
-            const raw = d.candidates[0].content.parts[0].inlineData.data;
-            const bin = atob(raw), bytes = new Int16Array(bin.length/2);
-            for(let i=0; i<bin.length; i+=2) bytes[i/2] = (bin.charCodeAt(i+1)<<8)|bin.charCodeAt(i);
-            const buf = state.audioCtx.createBuffer(1, bytes.length, 24000);
-            buf.getChannelData(0).set(new Float32Array(bytes).map(v => v/32768));
-            const s = state.audioCtx.createBufferSource(); s.buffer = buf; s.connect(state.audioCtx.destination); s.start();
-        } catch(e) {}
+            const data = JSON.parse(d.candidates[0].content.parts[0].text);
+            document.getElementById('narrative-text').innerText = data.msg;
+            if(isBoss) generateBossImg();
+        } catch(e) { document.getElementById('narrative-text').innerText = "The frontier calls!"; }
     }
 
-    function initAudio() { if(!state.audioCtx) state.audioCtx = new (AudioContext || webkitAudioContext)(); }
-    function sfx(f, d, t='square', v=0.03) { if(!state.audioCtx) return; const o = state.audioCtx.createOscillator(), g = state.audioCtx.createGain(); o.type = t; o.frequency.setValueAtTime(f, state.audioCtx.currentTime); g.gain.setValueAtTime(v, state.audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, state.audioCtx.currentTime + d); o.connect(g); g.connect(state.audioCtx.destination); o.start(); o.stop(state.audioCtx.currentTime + d); }
+    async function generateBossImg() {
+        if(!apiKey) return;
+        const box = document.getElementById('boss-portrait');
+        box.innerHTML = '...';
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ instances: { prompt: "Pixel art portrait of a legendary duck boss monster, 8-bit style." } })
+            });
+            const d = await res.json();
+            box.innerHTML = `<img src="data:image/png;base64,${d.predictions[0].bytesBase64Encoded}" class="w-full h-full object-cover">`;
+        } catch(e) { box.innerHTML = '🦆⚡'; }
+    }
 
-    class Projectile {
-        constructor(x, y, tx, ty, type) {
-            this.el = document.createElement('div'); this.el.className = 'projectile'; this.el.innerHTML = type === 'plunger' ? '🪠' : (type === 'tp' ? '🧻' : '💩');
-            this.el.style.fontSize = type === 'turd' ? '35px' : '22px'; river.appendChild(this.el); this.x = x; this.y = y; this.scale = 0.4;
-            const dx = tx - x, dy = ty - y, dist = Math.sqrt(dx*dx + dy*dy); this.vx = (dx/dist)*22; this.vy = (dy/dist)*22; this.active = true; this.damage = type === 'turd' ? 5 : 1;
+    window.closeNarrative = () => {
+        document.getElementById('game-narrative').classList.add('hidden');
+        gameState.active = true;
+        if(gameState.nextBoss) {
+            spawnBoss();
+            gameState.nextBoss = null;
+        } else {
+            spawnHorde();
         }
-        update() { this.x += this.vx; this.y += this.vy; this.scale = Math.min(1.0, this.scale + 0.05); this.el.style.left = this.x+'px'; this.el.style.top = this.y+'px'; this.el.style.transform = `scale(${this.scale}) rotate(${this.y*0.5}deg)`; if(this.y < -50 || this.y > 1200 || this.x < -50 || this.x > river.offsetWidth+50) this.destroy(); }
-        destroy() { this.active = false; this.el.remove(); }
+        gameLoop();
+    };
+
+    // --- GAME ENGINE ---
+    function initGameEngine() {
+        gameState.audioCtx = new (AudioContext || webkitAudioContext)();
+        initFlowers();
+        updateHUD();
+        gameState.active = true;
+        spawnHorde();
+        gameLoop();
+        triggerAI(false);
     }
 
-    class Duck {
-        constructor(isBoss = false) { this.isBoss = isBoss; this.el = document.createElement('div'); this.el.className = 'sprite'; this.el.innerHTML = isBoss ? '🦖' : '🦆'; this.el.style.fontSize = isBoss ? '120px' : '40px'; river.appendChild(this.el); this.hp = isBoss ? (15 + state.level * 10) : 1; this.maxHp = this.hp; this.w = isBoss ? 120 : 40; this.reset(); }
-        reset() { this.x = Math.random() * (river.offsetWidth - 100) + 50; this.y = -100; this.vy = this.isBoss ? 0.8 : (1.5 + (state.level * 0.1)); this.vx = (Math.random() - 0.5) * 6; }
-        update() { this.y += this.vy; this.x += this.vx; if(this.x < this.w/2 || this.x > river.offsetWidth - this.w/2) { this.vx *= -1; sfx(100, 0.05, 'triangle'); } this.el.style.left = this.x+'px'; this.el.style.top = this.y+'px'; if(this.y > window.innerHeight + 100) this.reset(); }
-        hit(dmg) { this.hp -= dmg; sfx(this.isBoss ? 60 : 300, 0.1, 'sawtooth'); if(this.isBoss) bossHp.style.width = (this.hp/this.maxHp*100)+'%'; if(this.hp <= 0) { state.score += this.isBoss ? 1000 : 25; if(!this.isBoss) state.killsInLevel++; this.die(); return true; } return false; }
-        die() { this.el.innerHTML = '⚡'; setTimeout(() => { this.el.remove(); if(this.isBoss) { state.boss = null; bossBar.style.display = 'none'; levelUp(); } }, 150); }
+    function initFlowers() {
+        const l = document.getElementById('bank-flowers-left'), r = document.getElementById('bank-flowers-right');
+        for(let i=0; i<30; i++) {
+            const f = document.createElement('div'); f.className='bank-flower';
+            f.style.top = Math.random()*100+'%'; f.style.left = Math.random()*80+'%';
+            l.appendChild(f);
+            const f2 = f.cloneNode(); f2.style.left = Math.random()*80+'%'; r.appendChild(f2);
+        }
     }
 
-    function updateLoop() {
-        if(!state.gameActive) return;
-        state.projectiles.forEach(p => { p.update(); if(state.boss && collides(p, state.boss)) { state.boss.hit(p.damage); p.destroy(); } else { state.ducks.forEach(d => { if(collides(p, d)) { d.hit(p.damage); p.destroy(); } }); } });
-        state.projectiles = state.projectiles.filter(p => p.active); if(state.boss) state.boss.update(); state.ducks.forEach(d => d.update());
-        scoreVal.innerText = state.score.toString().padStart(5, '0'); if(!state.boss && state.killsInLevel >= (5 + state.level * 2)) { if(state.level % 2 === 0) triggerBoss(); else levelUp(); }
-        requestAnimationFrame(updateLoop);
+    class Entity {
+        constructor(isBoss = false) {
+            this.isBoss = isBoss; this.el = document.createElement('div'); this.el.className='sprite';
+            this.dizzy = 0; this.slow = 0;
+            if(isBoss) { this.el.innerHTML='🦖'; this.hp=50+gameState.level*10; this.el.style.fontSize='120px'; }
+            else { 
+                const types = ['🦆','🦆','🦆','🦢','🦢🖤'];
+                const t = types[Math.min(gameState.level-1, types.length-1)];
+                this.el.innerHTML = t; this.hp = t.includes('🖤') ? 5 : 1; 
+                this.el.style.fontSize='40px'; 
+            }
+            document.getElementById('river').appendChild(this.el); this.reset();
+        }
+        reset() {
+            const riverW = document.getElementById('river').offsetWidth;
+            this.x = Math.random()*(riverW-100)+50; this.y = -100;
+            this.vx = (Math.random()-0.5)*6; this.vy = 1.5+(gameState.level*0.1);
+        }
+        update() {
+            let sm = this.slow > 0 ? 0.3 : 1; if(this.slow > 0) this.slow--;
+            if(this.dizzy > 0) {
+                this.x += Math.sin(Date.now()*0.1)*15; this.el.style.transform=`translate(-50%,-50%) rotate(${Date.now()*0.5}deg)`;
+                this.dizzy--; if(Date.now()%100<20) createStars(this.x, this.y);
+            } else {
+                this.x += this.vx*sm; this.y += this.vy*sm;
+                const riverW = document.getElementById('river').offsetWidth;
+                if(this.x<40 || this.x>riverW-40) { this.vx*=-1; sfx(100,0.05,'triangle'); }
+                this.el.style.transform=`translate(-50%,-50%)`;
+            }
+            this.el.style.left = this.x+'px'; this.el.style.top = this.y+'px';
+            if(this.y > window.innerHeight + 100) { if(!this.isBoss) { gameState.lives--; updateHUD(); if(gameState.lives<=0) endLevel(); } this.reset(); }
+        }
+        hit(type, dmg) {
+            this.hp -= dmg; sfx(300, 0.1);
+            if(type==='shroom') this.dizzy = 200;
+            if(type==='edibare') this.slow = 300;
+            if(this.hp<=0) { gameState.score += this.isBoss?2000:20; this.el.innerHTML='⚡'; setTimeout(()=>this.el.remove(),100); return true; }
+            return false;
+        }
     }
 
-    function collides(p, d) { const dx = p.x - d.x, dy = p.y - d.y; return Math.sqrt(dx*dx + dy*dy) < (d.isBoss ? 70 : 35); }
+    function createStars(x,y) {
+        const s = document.createElement('div'); s.className='dizzy-particle'; s.innerText='✨';
+        s.style.left=x+'px'; s.style.top=y+'px'; document.getElementById('river').appendChild(s);
+        setTimeout(()=>s.remove(),1000);
+    }
 
-    const startGame = () => { state.userName = usernameInput.value.trim() || "HEATHER"; initAudio(); document.getElementById('start-screen').style.display = 'none'; state.gameActive = true; spawnDucks(); updateLoop(); speak("THY JOURNEY BEGINS!"); };
-    document.getElementById('start-btn').addEventListener('click', startGame);
+    function gameLoop() {
+        if(!gameState.active) return;
+        gameState.projectiles.forEach((p, pi) => {
+            p.y -= 20; p.el.style.top = p.y+'px';
+            if(p.y<-50) { p.el.remove(); gameState.projectiles.splice(pi,1); }
+            gameState.ducks.forEach((d, di) => {
+                if(Math.abs(p.x-d.x)<50 && Math.abs(p.y-d.y)<50) {
+                    if(d.hit(p.type, p.dmg)) { if(!d.isBoss) gameState.killsInLevel++; gameState.ducks.splice(di,1); }
+                    p.el.remove(); gameState.projectiles.splice(pi,1);
+                    if(p.type==='turd') createBoom(p.x, p.y);
+                }
+            });
+        });
+        gameState.ducks.forEach(d => d.update());
+        updateHUD();
+        if(gameState.killsInLevel >= 10) { gameState.killsInLevel=0; levelUp(); }
+        requestAnimationFrame(gameLoop);
+    }
 
-    function spawnDucks() { state.ducks.forEach(d => d.el.remove()); state.ducks = []; const count = Math.min(4 + state.level, 10); for(let i=0; i<count; i++) state.ducks.push(new Duck()); }
+    function createBoom(x,y) {
+        const b = document.createElement('div'); b.className='explosion'; b.style.left=x+'px'; b.style.top=y+'px'; document.getElementById('river').appendChild(b);
+        sfx(60, 0.4, 'triangle'); setTimeout(()=>b.remove(),400);
+    }
 
-    function triggerBoss() { state.gameActive = false; document.getElementById('ai-overlay').style.display = 'flex'; aiText.innerText = "A MIGHTY FOE ARRIVES!"; speak("A MIGHTY FOE ARRIVES!"); state.nextBossName = "The Storm-Clucker"; document.getElementById('boss-title').innerText = "BOSS: " + state.nextBossName; }
+    function updateHUD() {
+        document.getElementById('game-score').innerText = gameState.score.toString().padStart(5,'0');
+        document.getElementById('game-level').innerText = gameState.level;
+        document.getElementById('game-lives').innerText = '❤️'.repeat(gameState.lives);
+        document.getElementById('ammo-tp').innerText = gameState.ammo.tp;
+        document.getElementById('ammo-turd').innerText = gameState.ammo.turd;
+        document.getElementById('ammo-edibare').innerText = gameState.ammo.edibare;
+        document.getElementById('ammo-shroom').innerText = gameState.ammo.shroom;
+    }
 
     function levelUp() {
-        state.level++; levelVal.innerText = state.level; const toast = document.getElementById('level-toast'); toast.classList.remove('toast-animate'); void toast.offsetWidth; toast.classList.add('toast-animate'); sfx(440, 0.5, 'sine');
-        if(state.level === 2 || state.level === 4) { state.gameActive = false; document.getElementById('ai-overlay').style.display = 'flex'; aiText.innerText = "THY POWER GROWS!"; speak("THY POWER GROWS!"); if(state.level === 2) document.getElementById('btn-tp').classList.remove('locked'); if(state.level === 4) document.getElementById('btn-turd').classList.remove('locked'); }
-        else { spawnDucks(); }
+        gameState.level++;
+        gameState.ammo.tp+=10; gameState.ammo.turd+=5; gameState.ammo.edibare+=2;
+        if(gameState.level%2===0) gameState.ammo.shroom+=1;
+        gameState.lives = Math.min(3, gameState.lives+1);
+        const t = document.getElementById('level-toast'); t.classList.add('toast-animate'); setTimeout(()=>t.classList.remove('toast-animate'),2000);
+        if(gameState.level%2===0) triggerAI(true);
+        updateWeaponUnlocks();
     }
 
-    window.resumeGame = () => { document.getElementById('ai-overlay').style.display = 'none'; state.gameActive = true; if(state.nextBossName) { state.boss = new Duck(true); state.nextBossName = null; bossBar.style.display = 'block'; } else { spawnDucks(); } updateLoop(); };
-    document.getElementById('resume-btn').onclick = window.resumeGame;
+    function updateWeaponUnlocks() {
+        if(gameState.level>=2) document.getElementById('btn-w-tp').style.opacity='1';
+        if(gameState.level>=3) document.getElementById('btn-w-edibare').style.opacity='1';
+        if(gameState.level>=4) document.getElementById('btn-w-turd').style.opacity='1';
+        if(gameState.level>=5) document.getElementById('btn-w-shroom').style.opacity='1';
+    }
 
-    window.addEventListener('mousedown', (e) => {
-        if(!state.gameActive) return; const r = river.getBoundingClientRect(); const sx = r.width/2, sy = r.height - 80; const tx = e.clientX - r.left, ty = e.clientY - r.top;
-        if(state.currentWeapon === 'plunger') { state.projectiles.push(new Projectile(sx, sy, tx, ty, 'plunger')); sfx(150, 0.1, 'sine'); }
-        else if(state.currentWeapon === 'tp') { state.projectiles.push(new Projectile(sx, sy, tx, ty, 'tp')); state.projectiles.push(new Projectile(sx, sy, tx-60, ty, 'tp')); state.projectiles.push(new Projectile(sx, sy, tx+60, ty, 'tp')); sfx(500, 0.05); }
-        else if(state.currentWeapon === 'turd') { state.projectiles.push(new Projectile(sx, sy, tx, ty, 'turd')); sfx(50, 0.4, 'triangle', 0.1); }
+    function spawnHorde() {
+        for(let i=0; i<5; i++) gameState.ducks.push(new Entity(false));
+    }
+
+    function endLevel() {
+        gameState.active = false;
+        pushScore();
+        document.getElementById('screen-game').classList.remove('active');
+        document.getElementById('screen-home').classList.add('active');
+        alert("The river has claimed thy plungers! Final Score: " + gameState.score);
+    }
+
+    // --- INPUTS ---
+    window.addEventListener('mousedown', e => {
+        if(!gameState.active) return;
+        const river = document.getElementById('river');
+        const rect = river.getBoundingClientRect();
+        if(e.clientX < rect.left || e.clientX > rect.right) return;
+        
+        const w = gameState.currentWeapon;
+        if(w!=='plunger' && gameState.ammo[w]<=0) return;
+        if(w!=='plunger') gameState.ammo[w]--;
+
+        const p = { x: e.clientX - rect.left, y: window.innerHeight - 50, type: w, dmg: w==='turd'?10:1, el: document.createElement('div') };
+        p.el.className='projectile'; p.el.innerHTML = w==='plunger'?'🪠':w==='tp'?'🧻':w==='turd'?'💩':w==='shroom'?'🍄':'🧸';
+        p.el.style.left=p.x+'px'; p.el.style.top=p.y+'px'; p.el.style.fontSize='30px';
+        river.appendChild(p.el); gameState.projectiles.push(p);
+        sfx(200, 0.1);
     });
 
-    const selectWep = (w) => {
-        if (w === 'tp' && state.level < 2) return;
-        if (w === 'turd' && state.level < 4) return;
-        state.currentWeapon = w;
-        document.querySelectorAll('.weapon-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(`btn-${w}`).classList.add('active');
-        sfx(440, 0.1);
+    window.selectWeapon = (type) => {
+        const locks = { plunger:0, tp:2, edibare:3, turd:4, shroom:5 };
+        if(gameState.level < locks[type]) return;
+        gameState.currentWeapon = type;
+        document.querySelectorAll('.weapon-btn').forEach(b => b.classList.remove('active', 'border-nes-yellow'));
+        document.getElementById('btn-w-'+type).classList.add('active', 'border-nes-yellow');
+    };
+
+    function renderManualCharts() {
+        const ctx = document.getElementById('weaponRadar').getContext('2d');
+        new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: ['Damage', 'AOE', 'Stun', 'Slow', 'Speed'],
+                datasets: [
+                    { label: 'Turd Bomb', data: [90, 100, 20, 10, 30], borderColor: '#e40058', backgroundColor: 'rgba(228, 0, 88, 0.2)' },
+                    { label: 'Magic Shroom', data: [10, 10, 100, 50, 60], borderColor: '#f8b800', backgroundColor: 'rgba(248, 184, 0, 0.2)' }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#2d1b0d' } } } }
+        });
     }
-    document.getElementById('btn-plunger').onclick = () => selectWep('plunger');
-    document.getElementById('btn-tp').onclick = () => selectWep('tp');
-    document.getElementById('btn-turd').onclick = () => selectWep('turd');
+
 </script>
 </body>
 </html>
