@@ -3,206 +3,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Heather's Duck Bash | Nintendo Edition</title>
+    <title>Heather's Duck Bash | Overhaul Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --nes-blue: #0058f8;
             --nes-red: #e40058;
             --nes-yellow: #f8b800;
+            --nes-dark: #202020;
             --cream: #fdfaf5;
-            --dark-coffee: #2d1b0d;
         }
 
         body {
-            margin: 0; padding: 0; overflow-x: hidden;
-            font-family: 'Inter', sans-serif;
+            margin: 0; padding: 0; overflow: hidden;
+            font-family: 'Press Start 2P', cursive;
             background-color: #000; color: #fff;
+            user-select: none; touch-action: none;
         }
 
-        .pixel-font { font-family: 'Press Start 2P', cursive; }
-        
-        /* CRT Scanline Effect */
-        .crt-overlay::before {
+        /* --- CRT NINTENDO FX --- */
+        .crt::before {
             content: " "; display: block; position: absolute;
             top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 500; background-size: 100% 4px, 3px 100%; pointer-events: none;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 2000; background-size: 100% 3px, 3px 100%; pointer-events: none;
         }
 
-        .app-screen { display: none; min-height: 100vh; width: 100vw; }
+        /* --- UI WRAPPERS --- */
+        .app-screen { display: none; min-height: 100vh; width: 100vw; position: absolute; top:0; left:0; }
         .app-screen.active { display: flex; flex-direction: column; }
+
+        .nes-border {
+            border: 4px solid #fff;
+            box-shadow: 0 0 0 4px #000, 8px 8px 0 0 rgba(0,0,0,0.5);
+        }
 
         .btn-nes {
             background-color: var(--nes-yellow); color: #000;
-            padding: 14px 28px; border: 4px solid #fff;
-            box-shadow: 6px 6px 0 #444; cursor: pointer;
+            padding: 18px 30px; border: 4px solid #fff;
+            box-shadow: 6px 6px 0 #000; cursor: pointer;
+            text-transform: uppercase; font-size: 12px;
         }
+        .btn-nes:hover { background-color: #fff; transform: translate(-2px, -2px); box-shadow: 8px 8px 0 #000; }
         .btn-nes:active { transform: translate(4px, 4px); box-shadow: 0 0 0 #000; }
 
-        .chart-container {
-            position: relative; width: 100%; max-width: 500px;
-            margin: auto; height: 350px; max-height: 400px;
+        /* --- THE RIVER ENGINE --- */
+        #river-stage {
+            position: relative; width: 80%; height: 100vh;
+            background-color: #2e86c1; border-left: 20px solid #0e351d; border-right: 20px solid #0e351d;
+            overflow: hidden; box-shadow: inset 0 0 150px rgba(0,0,0,0.4);
         }
+        #river-stage::after {
+            content: ""; position: absolute; inset: 0;
+            background-image: linear-gradient(0deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 100% 40px; animation: waterScroll 3s linear infinite;
+        }
+        @keyframes waterScroll { from { background-position: 0 0; } to { background-position: 0 400px; } }
 
-        #river {
-            position: relative; width: 75%; height: 100vh;
-            background-color: #2e86c1; border-left: 20px solid #1e3f20; border-right: 20px solid #1e3f20;
-            overflow: hidden;
-        }
         .bank-flower { position: absolute; width: 6px; height: 10px; background: #2e86de; box-shadow: 0 -4px 0 #fff; z-index: 5; }
         .sprite { position: absolute; transform: translate(-50%, -50%); z-index: 20; pointer-events: none; }
-        .projectile { position: absolute; z-index: 30; pointer-events: none; }
+        .projectile { position: absolute; z-index: 30; pointer-events: none; filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.2)); }
         
-        .explosion { position: absolute; transform: translate(-50%, -50%); background: radial-gradient(circle, #ff9f43 0%, transparent 70%); border-radius: 50%; opacity: 0.8; z-index: 25; animation: explode 0.4s ease-out forwards; }
-        @keyframes explode { 0% { scale: 0.1; opacity: 1; } 100% { scale: 3.5; opacity: 0; } }
+        .explosion { position: absolute; transform: translate(-50%, -50%); background: radial-gradient(circle, #f39c12 0%, transparent 70%); border-radius: 50%; opacity: 0.9; z-index: 25; animation: explode 0.3s ease-out forwards; }
+        @keyframes explode { 0% { scale: 0.2; } 100% { scale: 3.0; opacity: 0; } }
+
+        /* --- DASHBOARD --- */
+        .hud-card { background: rgba(0,0,0,0.85); border: 3px solid #fff; padding: 12px; font-size: 9px; }
+        .ammo-row { display: flex; justify-content: space-between; gap: 10px; margin-top: 4px; }
         
-        .dizzy-particle { position: absolute; font-size: 12px; pointer-events: none; z-index: 40; animation: float-up 1s ease-out forwards; }
-        @keyframes float-up { to { transform: translateY(-60px) rotate(360deg); opacity: 0; } }
-
-        .manual-bg { background-color: var(--cream); color: var(--dark-coffee); }
-        .manual-card { background: white; border: 4px solid var(--dark-coffee); box-shadow: 6px 6px 0 var(--dark-coffee); }
-
-        #level-toast { 
-            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); 
-            color: #f1c40f; font-size: 30px; opacity: 0; z-index: 1000; 
-            text-shadow: 4px 4px 0 #000; pointer-events: none; 
+        .weapon-btn {
+            width: 60px; height: 60px; border: 4px solid #444; background: #111;
+            display: flex; items-center justify-center; font-size: 24px; cursor: pointer;
         }
-        .toast-animate { animation: toastIn 2s ease-out forwards; }
-        @keyframes toastIn { 
-            0% { opacity: 0; transform: translate(-50%, 0%); }
-            20% { opacity: 1; transform: translate(-50%, -50%); }
-            100% { opacity: 0; transform: translate(-50%, -100%); }
-        }
+        .weapon-btn.active { border-color: var(--nes-yellow); background: #333; box-shadow: 0 0 15px var(--nes-yellow); }
+        .weapon-btn.locked { opacity: 0.2; cursor: not-allowed; }
+
+        /* --- MANUAL SPA --- */
+        .manual-container { background: var(--cream); color: var(--nes-dark); }
+        .tab-btn.active { background: var(--nes-red); color: #fff; }
+        .chart-wrap { position: relative; height: 300px; width: 100%; }
+
+        /* --- TOASTS --- */
+        #toast { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); color: var(--nes-yellow); font-size: 32px; opacity: 0; z-index: 3000; text-shadow: 4px 4px 0 #000; pointer-events: none; }
+        .toast-trigger { animation: toastIn 2s ease-out forwards; }
+        @keyframes toastIn { 0% { opacity: 0; transform: translate(-50%, 0%); } 20% { opacity: 1; transform: translate(-50%, -50%); } 80% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, -100%); } }
     </style>
 </head>
-<body class="crt-overlay">
+<body class="crt">
 
-<!-- SECTION 1: HOME SCREEN -->
-<section id="screen-home" class="app-screen active items-center justify-center bg-[#0058f8] text-center p-6">
-    <div class="mb-10">
-        <h1 class="pixel-font text-3xl md:text-5xl mb-4 text-white drop-shadow-[6px_6px_0_#e40058]">HEATHER'S</h1>
-        <h2 class="pixel-font text-2xl md:text-4xl text-[#f8b800] drop-shadow-[4px_4px_0_#000]">DUCK BASH</h2>
+<!-- 1. HOME SCREEN -->
+<section id="screen-home" class="app-screen active items-center justify-center bg-[#0058f8] p-6">
+    <div class="mb-10 text-center">
+        <h1 class="text-4xl md:text-6xl mb-4 text-white drop-shadow-[8px_8px_0_var(--nes-red)] uppercase italic">Heather's</h1>
+        <h2 class="text-2xl md:text-5xl text-nes-yellow drop-shadow-[6px_6px_0_#000] tracking-[0.2em] uppercase">Duck Bash</h2>
     </div>
 
-    <div class="mb-10 flex flex-col items-center">
-        <div class="w-48 h-48 bg-gray-900 border-4 border-white flex flex-col items-center justify-center relative shadow-2xl">
-            <div class="text-7xl mb-2">🤠</div>
-            <div class="flex gap-4">
-                <span class="text-3xl animate-bounce">🪠</span>
-                <span class="text-3xl">🦆</span>
-            </div>
-            <div class="absolute bottom-2 pixel-font text-[8px] text-yellow-400 tracking-tighter uppercase">Floresville Legend</div>
+    <div class="mb-10 p-6 nes-border bg-gray-800 flex flex-col items-center">
+        <div class="text-[80px] mb-4">🤠</div>
+        <div class="flex gap-8">
+            <span class="text-4xl animate-bounce">🪠</span>
+            <span class="text-4xl">🦆</span>
         </div>
+        <div class="mt-4 text-[10px] text-gray-400">FLORESVILLE FRONTIER v3.0</div>
     </div>
 
     <div class="w-full max-w-sm space-y-6">
-        <input type="text" id="username-input" placeholder="PILOT NAME" 
-               class="w-full p-4 bg-black border-4 border-white text-white pixel-font text-center outline-none focus:border-nes-yellow">
+        <input type="text" id="user-name" placeholder="PILOT NAME" 
+               class="w-full p-4 bg-black border-4 border-white text-white text-center text-sm outline-none focus:border-nes-yellow">
         
         <div class="flex flex-col gap-4">
-            <button id="start-mission-btn" class="btn-nes pixel-font text-sm uppercase">START MISSION</button>
-            <button id="field-manual-btn" class="bg-white text-black p-3 pixel-font text-[10px] border-4 border-black uppercase">FIELD MANUAL</button>
+            <button id="btn-start" class="btn-nes">Start Mission</button>
+            <button id="btn-manual" class="bg-white text-black p-3 border-4 border-black text-[10px] font-bold">FIELD MANUAL</button>
         </div>
     </div>
 
-    <div class="mt-12 bg-black/40 p-4 border-t-2 border-white/20 w-full max-w-md">
-        <h3 class="pixel-font text-[8px] text-gray-300 mb-4 uppercase">Global Leaderboard</h3>
-        <div id="leaderboard-list" class="text-[10px] pixel-font space-y-2 text-yellow-400">
-            Checking Rankings...
+    <div class="mt-12 w-full max-w-md bg-black/50 p-4 border-4 border-white/20">
+        <h3 class="text-[8px] text-nes-red mb-3 text-center uppercase tracking-widest">Frontier Legends</h3>
+        <div id="leaderboard-ui" class="text-[10px] space-y-2 text-nes-yellow">
+            BOOTING CLOUD INTEL...
         </div>
     </div>
 </section>
 
-<!-- SECTION 2: THE INTERACTIVE MANUAL (SPA) -->
-<section id="screen-manual" class="app-screen manual-bg p-6 md:p-12 text-[#2d1b0d]">
-    <div class="max-w-5xl mx-auto w-full">
-        <header class="flex justify-between items-center border-b-4 border-[#2d1b0d] pb-6 mb-10">
+<!-- 2. FIELD MANUAL SPA -->
+<section id="screen-manual" class="app-screen manual-container p-6 md:p-12">
+    <div class="max-w-5xl mx-auto w-full border-8 border-black bg-white p-8 shadow-[12px_12px_0_#000]">
+        <header class="flex justify-between items-center border-b-8 border-black pb-6 mb-8">
             <div>
-                <h2 class="pixel-font text-xl text-nes-red uppercase">Tactical Intel</h2>
-                <p class="text-xs font-bold tracking-widest opacity-60 uppercase mt-2">Frontier Database</p>
+                <h2 class="text-2xl text-nes-red uppercase font-black">Mission Intel</h2>
+                <p class="text-[10px] font-bold tracking-widest opacity-50 uppercase mt-1">Plunger-Class Tactical Data</p>
             </div>
-            <button id="exit-manual-btn" class="pixel-font text-[10px] bg-black text-white p-3 border-2 border-white uppercase">Exit Manual</button>
+            <button id="btn-exit-manual" class="bg-black text-white p-4 border-4 border-gray-400 text-[10px] hover:bg-gray-800 uppercase">Exit</button>
         </header>
 
         <div class="flex gap-4 mb-8">
-            <button id="btn-tab-weapons" class="px-4 py-2 border-2 border-dark-coffee font-bold text-xs uppercase bg-nes-red text-white">Weapons</button>
-            <button id="btn-tab-foes" class="px-4 py-2 border-2 border-dark-coffee font-bold text-xs uppercase bg-white">Foes</button>
+            <button id="tab-weapons" class="tab-btn active px-6 py-2 border-4 border-black font-bold text-[10px] uppercase">Arsenal</button>
+            <button id="tab-foes" class="tab-btn px-6 py-2 border-4 border-black font-bold text-[10px] uppercase bg-white">Threats</button>
         </div>
 
-        <div id="tab-weapons" class="manual-tab block">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-                <div class="chart-container manual-card p-4">
-                    <canvas id="weaponRadar"></canvas>
+        <div id="manual-weapons" class="manual-view block">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="chart-wrap border-4 border-black p-4 bg-gray-50">
+                    <canvas id="radarChart"></canvas>
                 </div>
                 <div class="space-y-6">
-                    <h3 class="font-bold text-lg border-b-2 border-dark-coffee pb-2 uppercase tracking-tighter">Strategic Analysis</h3>
-                    <p class="text-sm leading-relaxed">Your effectiveness depends on ammo conservation. **Shrooms** cause boss disorientation, while **Edibares** are essential for slowing the **Black Swan**.</p>
+                    <h3 class="font-bold text-lg border-b-4 border-black pb-2 uppercase">Combat Logic</h3>
+                    <p class="text-xs leading-relaxed font-sans text-gray-600">Heather, ammunition is thy lifeblood. Standard Plungers provide consistent push, but the **Turd Bomb** is thy only crowd-clearing solution. Use **Edibares** to tether fast-moving Swans.</p>
+                    <div class="p-4 bg-nes-yellow/20 border-l-8 border-nes-yellow">
+                        <span class="text-[10px] font-bold uppercase block mb-1">Status Effects</span>
+                        <p class="text-[10px] font-sans">🍄 Stun: 4.0s Spin | 🧸 Slow: -70% Velocity</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div id="tab-foes" class="manual-tab hidden">
+        <div id="manual-foes" class="manual-view hidden">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="manual-card p-4">
-                    <span class="text-4xl block mb-2">🦆</span>
-                    <h4 class="font-bold uppercase text-sm mb-1">Standard Duck</h4>
-                    <p class="text-xs opacity-70 italic">1 HP - Easy target.</p>
+                <div class="border-4 border-black p-6 text-center">
+                    <span class="text-6xl block mb-2">🦆</span>
+                    <h4 class="font-bold text-xs">Duck Grunt</h4>
+                    <p class="text-[9px] mt-2 opacity-60">1 HP. Moves linearly.</p>
                 </div>
-                <div class="manual-card p-4">
-                    <span class="text-4xl block mb-2">🦢🖤</span>
-                    <h4 class="font-bold uppercase text-sm mb-1">Black Swan</h4>
-                    <p class="text-xs opacity-70 italic">5 HP - Very fast.</p>
+                <div class="border-4 border-black p-6 text-center bg-gray-900 text-white">
+                    <span class="text-6xl block mb-2">🦢🖤</span>
+                    <h4 class="font-bold text-xs">Black Swan</h4>
+                    <p class="text-[9px] mt-2 text-gray-400">5 HP. High-speed ricochet AI.</p>
                 </div>
-                <div class="manual-card p-4">
-                    <span class="text-4xl block mb-2">🦖⚡</span>
-                    <h4 class="font-bold uppercase text-sm mb-1">Thunder Boss</h4>
-                    <p class="text-xs opacity-70 italic">Varies - Stun highly recommended.</p>
+                <div class="border-4 border-black p-6 text-center">
+                    <span class="text-6xl block mb-2">🦖</span>
+                    <h4 class="font-bold text-xs">Thunder Boss</h4>
+                    <p class="text-[9px] mt-2 opacity-60">Immense HP. Every 2nd level.</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- SECTION 3: THE GAME ENGINE -->
-<section id="screen-game" class="app-screen bg-[#4a6741] items-center relative overflow-hidden">
-    <div id="level-toast">GOD MODE!</div>
+<!-- 3. GAME STAGE -->
+<section id="screen-game" class="app-screen bg-[#4a6741] items-center">
+    <div id="toast">LEVEL UP!</div>
     
-    <div id="game-hud" class="absolute top-4 left-4 right-4 flex justify-between z-[100] pointer-events-none">
-        <div class="bg-black/80 border-2 border-nes-yellow p-3 text-white pixel-font text-[8px] pointer-events-auto">
-            <div id="game-lives" class="text-nes-red text-sm mb-2">❤️❤️❤️</div>
-            <div>SCORE: <span id="game-score" class="text-nes-yellow">00000</span></div>
-            <div class="mt-1">LEVEL: <span id="game-level">1</span></div>
+    <div id="hud" class="absolute top-6 left-6 right-6 flex justify-between z-[500] pointer-events-none">
+        <div class="hud-card nes-border pointer-events-auto">
+            <div id="lives-txt" class="text-nes-red text-xl mb-2">❤️❤️❤️</div>
+            <div class="text-nes-yellow">SCORE: <span id="score-txt">00000</span></div>
+            <div class="mt-1">LEVEL: <span id="level-txt">1</span></div>
         </div>
-        <div class="bg-black/80 border-2 border-white p-3 text-white pixel-font text-[8px] pointer-events-auto text-right">
-            <div>🧻 TP: <span id="ammo-tp">0</span> | 💩 TRD: <span id="ammo-turd">0</span></div>
-            <div class="mt-1 text-yellow-400">🧸 SLW: <span id="ammo-edibare">0</span> | 🍄 STN: <span id="ammo-shroom">0</span></div>
+        <div class="hud-card nes-border pointer-events-auto text-right">
+            <div class="ammo-row"><span>🧻 TP:</span><span id="txt-tp" class="text-nes-yellow">0</span></div>
+            <div class="ammo-row"><span>💩 TRD:</span><span id="txt-turd" class="text-nes-yellow">0</span></div>
+            <div class="ammo-row"><span>🧸 SLW:</span><span id="txt-slow" class="text-nes-yellow">0</span></div>
+            <div class="ammo-row"><span>🍄 STN:</span><span id="txt-stun" class="text-nes-yellow">0</span></div>
         </div>
     </div>
 
-    <div id="river">
-        <div id="bank-flowers-left"></div>
-        <div id="bank-flowers-right"></div>
+    <div id="river-stage">
+        <div id="bank-l"></div>
+        <div id="bank-r"></div>
     </div>
 
-    <div id="game-weapon-dock" class="absolute bottom-4 right-4 flex gap-2 z-[100]">
-        <div id="btn-w-plunger" class="weapon-btn active p-2 border-2 border-nes-yellow bg-black/60 cursor-pointer">🪠</div>
-        <div id="btn-w-tp" class="weapon-btn opacity-20 p-2 border-2 border-white bg-black/60 cursor-pointer">🧻</div>
-        <div id="btn-w-turd" class="weapon-btn opacity-20 p-2 border-2 border-white bg-black/60 cursor-pointer">💩</div>
-        <div id="btn-w-edibare" class="weapon-btn opacity-20 p-2 border-2 border-white bg-black/60 cursor-pointer">🧸</div>
-        <div id="btn-w-shroom" class="weapon-btn opacity-20 p-2 border-2 border-white bg-black/60 cursor-pointer">🍄</div>
+    <div id="weapon-dock" class="absolute bottom-8 right-8 flex gap-4 z-[500]">
+        <div id="w-plunger" class="weapon-btn active nes-border" onclick="window.setWeapon('plunger')">🪠</div>
+        <div id="w-tp" class="weapon-btn locked nes-border" onclick="window.setWeapon('tp')">🧻</div>
+        <div id="w-turd" class="weapon-btn locked nes-border" onclick="window.setWeapon('turd')">💩</div>
+        <div id="w-edibare" class="weapon-btn locked nes-border" onclick="window.setWeapon('edibare')">🧸</div>
+        <div id="w-shroom" class="weapon-btn locked nes-border" onclick="window.setWeapon('shroom')">🍄</div>
     </div>
 
-    <div id="game-narrative" class="absolute inset-0 bg-black/95 z-[1000] flex flex-col items-center justify-center p-10 hidden">
-        <div id="boss-portrait" class="w-40 h-40 border-4 border-nes-yellow mb-4 bg-gray-800"></div>
-        <div class="max-w-md bg-white text-black p-6 border-4 border-nes-red relative shadow-[8px_8px_0_#e40058]">
-            <div class="absolute -top-3 left-4 bg-nes-red text-white text-[8px] px-2 pixel-font uppercase">Thunder Mallard</div>
-            <p id="narrative-text" class="text-sm leading-relaxed font-bold">The frontier demands thy plunger!</p>
+    <div id="overlay-ai" class="absolute inset-0 bg-black/95 z-[5000] flex flex-col items-center justify-center p-10 hidden">
+        <div id="boss-box" class="w-48 h-48 border-8 border-nes-yellow mb-8 bg-gray-800 shadow-[15px_15px_0_rgba(0,0,0,0.5)] flex items-center justify-center text-6xl">🦖</div>
+        <div class="max-w-md bg-white text-black p-8 border-8 border-nes-red relative nes-border">
+            <div class="absolute -top-4 left-6 bg-nes-red text-white text-[10px] px-4 py-1">THUNDER MALLARD</div>
+            <p id="ai-msg" class="text-[12px] leading-loose font-black uppercase">Ride forth, Heather! The river demands a bash!</p>
         </div>
-        <button id="close-narrative-btn" class="pixel-btn btn-nes mt-8 pixel-font text-[10px] uppercase">Ride Forth</button>
+        <button id="btn-engage" class="btn-nes mt-10">ENGAGE</button>
     </div>
 </section>
 
@@ -211,289 +228,293 @@
     import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // --- FAIL-SAFE CONFIG ---
+    // --- CONFIG & FAIL-SAFE ---
     let firebaseConfig = { apiKey: "AIzaSyD-offline", authDomain: "null", projectId: "null" };
-    try {
-        if (typeof __firebase_config !== 'undefined') {
-            firebaseConfig = JSON.parse(__firebase_config);
-        }
-    } catch (e) { console.warn("Offline mode enabled."); }
+    try { if (typeof __firebase_config !== 'undefined') firebaseConfig = JSON.parse(__firebase_config); } catch(e) {}
     
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'heathers-duck-bash-prod';
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'heathers-duck-bash-overhaul-final';
     const apiKey = ""; 
 
-    let chartInstance = null;
+    // --- ENGINE STATE ---
     let user = null;
-
-    let gameState = {
+    let chart = null;
+    let ST = {
         score: 0, level: 1, lives: 3, active: false,
-        ammo: { tp: 10, turd: 5, edibare: 2, shroom: 1 },
+        ammo: { tp: 20, turd: 8, edibare: 5, shroom: 2 },
         currentWeapon: 'plunger',
-        ducks: [], projectiles: [], killsInLevel: 0,
-        userName: "HEATHER", audioCtx: null
+        ducks: [], projectiles: [], killsCount: 0,
+        userName: "HEATHER", audioCtx: null, bossPending: false
     };
 
-    // --- CORE NAVIGATION (MODULE INTERNAL) ---
-    const showManual = () => {
+    // --- NAVIGATION ---
+    window.showManual = () => {
         document.getElementById('screen-home').classList.remove('active');
         document.getElementById('screen-manual').classList.add('active');
-        switchTab('tab-weapons');
-        setTimeout(renderManualCharts, 100);
+        window.switchTab('weapons');
     };
-
-    const showHome = () => {
-        document.getElementById('screen-manual').classList.remove('active');
+    window.showHome = () => {
+        document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
         document.getElementById('screen-home').classList.add('active');
     };
-
-    const switchTab = (tabId) => {
-        document.querySelectorAll('.manual-tab').forEach(t => t.classList.add('hidden'));
-        document.getElementById(tabId).classList.remove('hidden');
-        document.getElementById(tabId).classList.add('block');
-        
-        document.querySelectorAll('#screen-manual button').forEach(b => {
-            b.classList.remove('bg-nes-red', 'text-white');
-            b.classList.add('bg-white', 'text-dark-coffee');
-        });
-        const activeBtn = document.getElementById('btn-' + tabId);
-        if(activeBtn) {
-            activeBtn.classList.remove('bg-white');
-            activeBtn.classList.add('bg-nes-red', 'text-white');
-        }
+    window.switchTab = (id) => {
+        document.querySelectorAll('.manual-view').forEach(v => v.classList.replace('block', 'hidden'));
+        document.getElementById('manual-' + id).classList.replace('hidden', 'block');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'bg-nes-red', 'text-white'));
+        document.getElementById('tab-' + id).classList.add('active', 'bg-nes-red', 'text-white');
+        if(id === 'weapons') setTimeout(initRadar, 50);
     };
-
-    const startGame = () => {
-        const input = document.getElementById('username-input');
-        if(!input.value.trim()) return alert("Enter thy name, pilot!");
-        gameState.userName = input.value.trim();
+    window.startGame = () => {
+        const n = document.getElementById('user-name').value.trim();
+        if(!n) return alert("Halt! Who goes there? (Enter Name)");
+        ST.userName = n;
         document.getElementById('screen-home').classList.remove('active');
         document.getElementById('screen-game').classList.add('active');
-        initGameEngine();
+        initEngine();
     };
 
-    // --- ATTACH TO WINDOW FOR HTML ONCLICK ---
-    window.showManual = showManual;
-    window.showHome = showHome;
-    window.switchTab = switchTab;
-    window.startGame = startGame;
-
-    // --- BUTTON EVENT LISTENERS (BACKUP) ---
-    document.getElementById('start-mission-btn').addEventListener('click', startGame);
-    document.getElementById('field-manual-btn').addEventListener('click', showManual);
-    document.getElementById('exit-manual-btn').addEventListener('click', showHome);
-    document.getElementById('btn-tab-weapons').onclick = () => switchTab('tab-weapons');
-    document.getElementById('btn-tab-foes').onclick = () => switchTab('tab-foes');
-
-    // --- LEADERBOARD & AUTH ---
-    const initAuth = async () => {
-        try {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
-        } catch (e) { console.error("Cloud features unavailable."); }
-    };
-    initAuth();
-    onAuthStateChanged(auth, u => { user = u; if(u && firebaseConfig.projectId !== "null") fetchScores(); });
-
-    function fetchScores() {
-        if(firebaseConfig.projectId === "null") return;
-        const col = collection(db, 'artifacts', appId, 'public', 'data', 'scores');
-        onSnapshot(col, snap => {
-            let s = []; snap.forEach(d => s.push(d.data()));
-            s.sort((a,b) => b.score - a.score);
-            document.getElementById('leaderboard-list').innerHTML = s.slice(0, 5).map((e,i) => `<div>${i+1}. ${e.name} - ${e.score}</div>`).join('') || "NO LEGENDS RECORDED";
-        }, err => console.error(err));
+    // --- GAME CLASSES ---
+    class Projectile {
+        constructor(x, y, type) {
+            this.x = x; this.y = y; this.type = type; this.active = true;
+            this.dmg = type === 'turd' ? 15 : 1;
+            this.el = document.createElement('div');
+            this.el.className = 'projectile';
+            this.el.innerHTML = type==='plunger'?'🪠':type==='tp'?'🧻':type==='turd'?'💩':type==='shroom'?'🍄':'🧸';
+            this.el.style.fontSize = '40px';
+            this.el.style.left = this.x + 'px';
+            this.el.style.top = this.y + 'px';
+            document.getElementById('river-stage').appendChild(this.el);
+        }
+        tick() {
+            this.y -= 18;
+            this.el.style.top = this.y + 'px';
+            if(this.y < -100) this.die();
+        }
+        die() { this.active = false; if(this.el.parentNode) this.el.remove(); }
     }
 
-    // --- GAME ENGINE ---
-    function initGameEngine() {
-        gameState.audioCtx = new (AudioContext || webkitAudioContext)();
-        initFlowers();
-        updateHUD();
-        gameState.active = true;
-        spawnHorde();
-        requestAnimationFrame(gameLoop);
-        triggerAI(false);
-    }
-
-    class Duck {
+    class Foe {
         constructor(isBoss = false) {
-            this.isBoss = isBoss; this.el = document.createElement('div'); this.el.className='sprite';
-            this.dizzy = 0; this.slow = 0;
-            if(isBoss) { this.el.innerHTML='🦖'; this.hp=60+gameState.level*10; this.el.style.fontSize='120px'; }
-            else { 
-                const t = gameState.level > 6 ? '🦢🖤' : gameState.level > 3 ? '🦢' : '🦆';
-                this.el.innerHTML = t; this.hp = t.includes('🖤') ? 5 : 1; this.el.style.fontSize='40px'; 
+            this.isBoss = isBoss; this.active = true; this.dizzy = 0; this.slow = 0;
+            const rw = document.getElementById('river-stage').offsetWidth;
+            this.x = 80 + Math.random() * (rw - 160); this.y = -100;
+            this.vx = (Math.random()-0.5) * 8; this.vy = 2 + (ST.level * 0.15);
+            this.el = document.createElement('div'); this.el.className = 'sprite';
+            if(isBoss) { this.el.innerHTML = '🦖'; this.hp = 80 + ST.level * 30; this.el.style.fontSize = '150px'; }
+            else {
+                const types = ['🦆','🦆','🦢','🦢🖤'];
+                const t = types[Math.min(ST.level-1, types.length-1)];
+                this.el.innerHTML = t; this.hp = t.includes('🖤') ? 6 : 1; this.el.style.fontSize = '50px';
             }
-            document.getElementById('river').appendChild(this.el); this.reset();
+            document.getElementById('river-stage').appendChild(this.el);
         }
-        reset() {
-            const rw = document.getElementById('river').offsetWidth;
-            this.x = Math.random()*(rw-100)+50; this.y = -100;
-            this.vx = (Math.random()-0.5)*6; this.vy = 1.8+(gameState.level*0.1);
-        }
-        update() {
-            let sm = this.slow > 0 ? 0.3 : 1; if(this.slow > 0) this.slow--;
+        tick() {
+            let s = this.slow > 0 ? 0.3 : 1; if(this.slow > 0) this.slow--;
             if(this.dizzy > 0) {
-                this.x += Math.sin(Date.now()*0.1)*15; this.el.style.transform=`translate(-50%,-50%) rotate(${Date.now()*0.5}deg)`;
+                this.x += Math.sin(Date.now()*0.1)*20; this.el.style.transform=`translate(-50%,-50%) rotate(${Date.now()*0.5}deg)`;
                 this.dizzy--;
             } else {
-                this.x += this.vx*sm; this.y += this.vy*sm;
-                const rw = document.getElementById('river').offsetWidth;
-                if(this.x<40 || this.x>rw-40) this.vx*=-1;
+                this.x += this.vx * s; this.y += this.vy * s;
+                const rw = document.getElementById('river-stage').offsetWidth;
+                if(this.x<60 || this.x>rw-60) this.vx *= -1;
                 this.el.style.transform=`translate(-50%,-50%)`;
             }
-            this.el.style.left = this.x+'px'; this.el.style.top = this.y+'px';
-            if(this.y > window.innerHeight + 100) { if(!this.isBoss) { gameState.lives--; if(gameState.lives<=0) endGame(); } this.reset(); }
+            this.el.style.left = this.x + 'px'; this.el.style.top = this.y + 'px';
+            if(this.y > window.innerHeight + 150) { if(!this.isBoss) { ST.lives--; updateUI(); if(ST.lives<=0) endGame(); } this.die(); }
         }
         hit(type, dmg) {
-            this.hp -= dmg; if(type==='shroom') this.dizzy = 200; if(type==='edibare') this.slow = 300;
-            if(this.hp<=0) { gameState.score+=this.isBoss?2000:25; this.el.remove(); return true; }
+            this.hp -= dmg; if(type === 'shroom') this.dizzy = 250; if(type === 'edibare') this.slow = 400;
+            if(this.hp <= 0) {
+                ST.score += this.isBoss ? 2000 : 30; 
+                this.el.innerHTML = '⚡'; setTimeout(() => this.die(), 100); return true;
+            }
             return false;
         }
+        die() { this.active = false; if(this.el.parentNode) this.el.remove(); }
     }
 
-    function gameLoop() {
-        if(!gameState.active) return;
-        gameState.projectiles.forEach((p, pi) => {
-            p.y -= 20; p.el.style.top = p.y+'px';
-            if(p.y<-50) { p.el.remove(); gameState.projectiles.splice(pi,1); }
-            gameState.ducks.forEach((d, di) => {
-                if(Math.abs(p.x-d.x)<50 && Math.abs(p.y-d.y)<50) {
-                    if(d.hit(p.type, p.dmg)) { if(!d.isBoss) gameState.killsInLevel++; gameState.ducks.splice(di,1); }
-                    if(p.el.parentNode) p.el.remove();
-                    gameState.projectiles.splice(pi,1);
+    // --- ENGINE LOGIC ---
+    function initEngine() {
+        ST.audioCtx = new (AudioContext || webkitAudioContext)();
+        initEnvironment();
+        updateUI();
+        ST.active = true; ST.score = 0; ST.level = 1; ST.lives = 3; ST.killsCount = 0;
+        ST.ducks = []; ST.projectiles = [];
+        triggerNarrative(false);
+    }
+
+    function engineLoop() {
+        if(!ST.active) return;
+
+        ST.projectiles.forEach((p, pi) => {
+            p.tick();
+            if(!p.active) ST.projectiles.splice(pi, 1);
+            
+            ST.ducks.forEach((d, di) => {
+                const dist = Math.sqrt(Math.pow(p.x - d.x, 2) + Math.pow(p.y - d.y, 2));
+                if(dist < (d.isBoss ? 80 : 45)) {
+                    if(d.hit(p.type, p.dmg)) { if(!d.isBoss) ST.killsCount++; ST.ducks.splice(di, 1); }
+                    if(p.type === 'turd') triggerBoom(p.x, p.y);
+                    p.die(); ST.projectiles.splice(pi, 1);
                 }
             });
         });
-        gameState.ducks.forEach(d => d.update());
-        if(gameState.killsInLevel >= 8) { gameState.killsInLevel=0; levelUp(); }
-        updateHUD();
-        requestAnimationFrame(gameLoop);
+
+        ST.ducks.forEach((d, di) => { d.tick(); if(!d.active) ST.ducks.splice(di, 1); });
+
+        if(ST.ducks.length < 5 && !ST.ducks.some(d => d.isBoss)) ST.ducks.push(new Foe(false));
+        if(ST.killsCount >= 10) { ST.killsCount = 0; levelUp(); }
+
+        updateUI();
+        requestAnimationFrame(engineLoop);
+    }
+
+    function triggerBoom(x,y) {
+        const b = document.createElement('div'); b.className='explosion'; b.style.left=x+'px'; b.style.top=y+'px';
+        document.getElementById('river-stage').appendChild(b); setTimeout(()=>b.remove(), 300);
+        ST.ducks.forEach(d => { if(Math.sqrt(Math.pow(d.x-x,2)+Math.pow(d.y-y,2)) < 150) d.hit('turd', 10); });
     }
 
     function levelUp() {
-        gameState.level++;
-        gameState.ammo.tp+=10; gameState.ammo.turd+=5; gameState.ammo.edibare+=2;
-        if(gameState.level%2===0) { gameState.ammo.shroom+=1; triggerAI(true); }
-        gameState.lives = Math.min(3, gameState.lives+1);
-        const t = document.getElementById('level-toast'); t.classList.add('toast-animate');
-        setTimeout(() => t.classList.remove('toast-animate'), 2000);
+        ST.level++;
+        ST.ammo.tp += 15; ST.ammo.turd += 5; ST.ammo.edibare += 3;
+        if(ST.level % 2 === 0) ST.ammo.shroom += 1;
+        ST.lives = Math.min(3, ST.lives + 1);
+        const t = document.getElementById('toast'); t.classList.add('toast-trigger'); setTimeout(()=>t.classList.remove('toast-trigger'), 2000);
+        if(ST.level % 2 === 0) { ST.bossPending = true; triggerNarrative(true); }
         updateUnlocks();
     }
 
-    function updateHUD() {
-        document.getElementById('game-score').innerText = gameState.score.toString().padStart(5,'0');
-        document.getElementById('game-level').innerText = gameState.level;
-        document.getElementById('game-lives').innerText = '❤️'.repeat(Math.max(0, gameState.lives));
-        document.getElementById('ammo-tp').innerText = gameState.ammo.tp;
-        document.getElementById('ammo-turd').innerText = gameState.ammo.turd;
-        document.getElementById('ammo-edibare').innerText = gameState.ammo.edibare;
-        document.getElementById('ammo-shroom').innerText = gameState.ammo.shroom;
+    function updateUI() {
+        document.getElementById('score-txt').innerText = ST.score.toString().padStart(5,'0');
+        document.getElementById('level-txt').innerText = ST.level;
+        document.getElementById('lives-txt').innerText = '❤️'.repeat(Math.max(0, ST.lives));
+        document.getElementById('txt-tp').innerText = ST.ammo.tp;
+        document.getElementById('txt-turd').innerText = ST.ammo.turd;
+        document.getElementById('txt-slow').innerText = ST.ammo.edibare;
+        document.getElementById('txt-stun').innerText = ST.ammo.shroom;
     }
 
-    window.selectWeapon = (w) => {
-        const l = { plunger:0, tp:2, edibare:3, turd:4, shroom:5 };
-        if(gameState.level < l[w]) return;
-        gameState.currentWeapon = w;
+    window.setWeapon = (w) => {
+        const locks = { plunger:0, tp:2, edibare:3, turd:4, shroom:5 };
+        if(ST.level < locks[w]) return;
+        ST.currentWeapon = w;
         document.querySelectorAll('.weapon-btn').forEach(b => b.classList.remove('active', 'border-nes-yellow'));
-        document.getElementById('btn-w-'+w).classList.add('active', 'border-nes-yellow');
+        document.getElementById('w-' + w).classList.add('active', 'border-nes-yellow');
     };
 
-    window.addEventListener('mousedown', e => {
-        if(!gameState.active) return;
-        const rect = document.getElementById('river').getBoundingClientRect();
-        if(e.clientX < rect.left || e.clientX > rect.right) return;
-        const w = gameState.currentWeapon;
-        if(w!=='plunger' && gameState.ammo[w]<=0) return;
-        if(w!=='plunger') gameState.ammo[w]--;
-        const p = { x: e.clientX-rect.left, y: window.innerHeight-50, type: w, dmg: w==='turd'?10:1, el: document.createElement('div') };
-        p.el.className='projectile'; p.el.innerHTML = w==='plunger'?'🪠':w==='tp'?'🧻':w==='turd'?'💩':w==='shroom'?'🍄':'🧸';
-        p.el.style.left=p.x+'px'; p.el.style.top=p.y+'px'; p.el.style.fontSize='30px';
-        document.getElementById('river').appendChild(p.el); gameState.projectiles.push(p);
-    });
-
-    async function triggerAI(isBoss) {
-        gameState.active = false;
-        document.getElementById('game-narrative').classList.remove('hidden');
-        if(isBoss) generateBossImg();
+    async function triggerNarrative(isBoss) {
+        ST.active = false;
+        document.getElementById('overlay-ai').classList.remove('hidden');
+        if(isBoss) generateBossArt();
         if(!apiKey) return;
         try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: isBoss ? "Boss coming." : "Welcome back." }] }], systemInstruction: { parts: [{ text: "Thor-Cowboy persona." }] }, generationConfig: { responseMimeType: "application/json" } })
+                body: JSON.stringify({ contents: [{ parts: [{ text: isBoss ? "A boss arrives." : "Prepare." }] }], systemInstruction: { parts: [{ text: "Thor-Cowboy persona." }] }, generationConfig: { responseMimeType: "application/json" } })
             });
             const d = await res.json();
             const data = JSON.parse(d.candidates[0].content.parts[0].text);
-            document.getElementById('narrative-text').innerText = data.msg;
-        } catch(e) { document.getElementById('narrative-text').innerText = "The frontier calls!"; }
-    }
-
-    async function generateBossImg() {
-        if(!apiKey) return;
-        try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ instances: { prompt: "Pixel art duck boss." } })
-            });
-            const d = await res.json();
-            document.getElementById('boss-portrait').innerHTML = `<img src="data:image/png;base64,${d.predictions[0].bytesBase64Encoded}" class="w-full h-full object-cover">`;
+            document.getElementById('ai-msg').innerText = data.msg;
         } catch(e) {}
     }
 
-    window.closeNarrative = () => { document.getElementById('game-narrative').classList.add('hidden'); gameState.active = true; spawnHorde(); };
-    document.getElementById('close-narrative-btn').onclick = window.closeNarrative;
-
-    function spawnHorde() { for(let i=0; i<5; i++) gameState.ducks.push(new Duck(false)); }
-    function updateUnlocks() {
-        if(gameState.level>=2) document.getElementById('btn-w-tp').style.opacity='1';
-        if(gameState.level>=3) document.getElementById('btn-w-edibare').style.opacity='1';
-        if(gameState.level>=4) document.getElementById('btn-w-turd').style.opacity='1';
-        if(gameState.level>=5) document.getElementById('btn-w-shroom').style.opacity='1';
+    async function generateBossArt() {
+        const box = document.getElementById('boss-box'); box.innerHTML = "...";
+        if(!apiKey) return box.innerHTML = "🦖";
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ instances: { prompt: "8-bit pixel art portrait of duck boss monster." } })
+            });
+            const d = await res.json();
+            box.innerHTML = `<img src="data:image/png;base64,${d.predictions[0].bytesBase64Encoded}" class="w-full h-full object-cover">`;
+        } catch(e) { box.innerHTML = "🦖"; }
     }
 
-    function initFlowers() {
-        const l = document.getElementById('bank-flowers-left'), r = document.getElementById('bank-flowers-right');
+    window.closeNarrative = () => {
+        document.getElementById('overlay-ai').classList.add('hidden');
+        ST.active = true; 
+        if(ST.bossPending) { ST.ducks.push(new Foe(true)); ST.bossPending = false; }
+        requestAnimationFrame(engineLoop);
+    };
+
+    function updateUnlocks() {
+        if(ST.level>=2) document.getElementById('w-tp').classList.remove('locked');
+        if(ST.level>=3) document.getElementById('w-edibare').classList.remove('locked');
+        if(ST.level>=4) document.getElementById('w-turd').classList.remove('locked');
+        if(ST.level>=5) document.getElementById('w-shroom').classList.remove('locked');
+    }
+
+    function initEnvironment() {
+        const l = document.getElementById('bank-l'), r = document.getElementById('bank-r');
         l.innerHTML = ''; r.innerHTML = '';
         for(let i=0; i<30; i++) {
-            const f = document.createElement('div'); f.className='bank-flower';
-            f.style.top = Math.random()*100+'%'; f.style.left = Math.random()*80+'%';
+            const f = document.createElement('div'); f.className='bank-flower'; f.style.top = Math.random()*100+'%'; f.style.left = Math.random()*80+'%';
             l.appendChild(f); const f2 = f.cloneNode(); f2.style.left = Math.random()*80+'%'; r.appendChild(f2);
         }
     }
 
     async function endGame() {
-        gameState.active = false;
+        ST.active = false;
         if(firebaseConfig.projectId !== "null") {
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'scores'), { name: gameState.userName, score: gameState.score, timestamp: Date.now() });
-            } catch(e) {}
+            try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'scores'), { name: ST.userName, score: ST.score, timestamp: Date.now() }); } catch(e) {}
         }
-        alert("GAME OVER! Final Score: " + gameState.score);
+        alert("CRITICAL DAMAGE! Score: " + ST.score);
         location.reload();
     }
 
-    function renderManualCharts() {
-        if(chartInstance) chartInstance.destroy();
-        const ctx = document.getElementById('weaponRadar').getContext('2d');
-        chartInstance = new Chart(ctx, {
+    function initRadar() {
+        if(chart) chart.destroy();
+        const ctx = document.getElementById('radarChart').getContext('2d');
+        chart = new Chart(ctx, {
             type: 'radar',
             data: {
-                labels: ['Dmg', 'AOE', 'Stun', 'Slow', 'Spd'],
+                labels: ['POWER', 'AOE', 'STUN', 'SLOW', 'SPEED'],
                 datasets: [
-                    { label: 'Turd', data: [90, 100, 20, 10, 30], borderColor: '#e40058', backgroundColor: 'rgba(228, 0, 88, 0.2)' },
-                    { label: 'Shroom', data: [10, 10, 100, 50, 60], borderColor: '#f8b800', backgroundColor: 'rgba(248, 184, 0, 0.2)' }
+                    { label: 'Plunger', data: [20, 5, 5, 0, 100], borderColor: '#0058f8', backgroundColor: 'rgba(0,88,248,0.2)' },
+                    { label: 'Turd', data: [100, 100, 20, 10, 40], borderColor: '#e40058', backgroundColor: 'rgba(228,0,88,0.2)' }
                 ]
             },
             options: { responsive: true, maintainAspectRatio: false, scales: { r: { min: 0, max: 100 } } }
         });
     }
 
+    // --- INPUT & BOOT ---
+    window.addEventListener('mousedown', e => {
+        if(!ST.active) return;
+        const rect = document.getElementById('river-stage').getBoundingClientRect();
+        if(e.clientX < rect.left || e.clientX > rect.right) return;
+        const w = ST.currentWeapon;
+        if(w !== 'plunger' && ST.ammo[w] <= 0) return;
+        if(w !== 'plunger') ST.ammo[w]--;
+        ST.projectiles.push(new Projectile(e.clientX - rect.left, window.innerHeight - 80, w));
+    });
+
+    onAuthStateChanged(auth, u => { user = u; if(u && firebaseConfig.projectId !== "null") fetchScores(); });
+    const initAuth = async () => { try { if (typeof __initial_auth_token !== 'undefined') await signInWithCustomToken(auth, __initial_auth_token); else await signInAnonymously(auth); } catch(e) {} };
+    initAuth();
+
+    function fetchScores() {
+        if(firebaseConfig.projectId === "null") return;
+        onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'scores'), snap => {
+            let s = []; snap.forEach(d => s.push(d.data()));
+            s.sort((a,b) => b.score - a.score);
+            document.getElementById('leaderboard-ui').innerHTML = s.slice(0, 5).map((e,i) => `<div>${i+1}. ${e.name} - ${e.score}</div>`).join('') || "NO RECORDED HEROES";
+        });
+    }
+
+    document.getElementById('btn-start').onclick = window.startGame;
+    document.getElementById('btn-manual').onclick = window.showManual;
+    document.getElementById('btn-exit-manual').onclick = window.showHome;
+    document.getElementById('tab-weapons').onclick = () => window.switchTab('weapons');
+    document.getElementById('tab-foes').onclick = () => window.switchTab('foes');
+    document.getElementById('btn-engage').onclick = window.closeNarrative;
+
 </script>
 </body>
 </html>
+
