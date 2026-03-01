@@ -1,37 +1,55 @@
-<b>⚡ Heather's Duck Bash: Thunder Edition 🦆</b>
+**⚡ Heather's Duck Bash: Floresville God-Mode 🦆🤠**
 
-"Whosoever holds this plunger, if they be worthy, shall possess the power of... THE BASH." — The Thunder Mallard
+"By the power of the Floresville Peanuts and the Thunder of the Heavens, I summon thee to the Bash!" — The Thunder Mallard
 
-Welcome to Heather's Duck Bash, an epic, mythological vertical shooter. Navigate the Great Porcelain River, battle bouncing mallards, and face off against the Storm-Clucker!
+Welcome to the ultimate version of Heather's Duck Bash. This isn't just a vertical shooter; it's a chiptune tribute to South Texas roots, mythological power, and strategic duck-bashing.
 
-<b>🎮 PLAY THE GAME LIVE HERE!</b>
+**🎮 PLAY THE GAME LIVE HERE!**
 
-<b>🌊 The Story</b>
+**🌊 The Lore**
 
-The Great Porcelain River is flowing with chaos. Bouncing ducks have taken over the banks, and the legendary Thunder Mallard (Thor in duck form) has summoned Heather to clear the path. Armed only with high-velocity plungers and the raw power of thunder, it's time to bash.
+The Great Porcelain River flows through the heart of Floresville. Lush bluebonnets line the banks, but the water is teeming with a quacking uprising. The legendary Thunder Mallard has chosen Heather to defend the Frontier. Armed with mystical plungers and a satchel of Texas "magic," you must ride the river and clear the path to Val-quack-a.
 
-<b>✨ Epic Features</b>
+**🕹️ Field Instructions (How to Play)**
 
-<b>🎳 Bowling Duck AI:</b> Ducks don't just swim; they bounce off the grassy banks like a chaotic game of bowling.
+**The Goal:** Survive the river and climb levels by bashing enemies. If 3 ducks pass you, your mission ends.
 
-<b>⛈️ The Voice of Thor:</b> Features majestic, booming AI narration. Hear the authority of the Thunder Mallard before every battle.
+**Aiming:** Move your mouse to aim your crosshair across the river.
 
-<b>🦖 AI Bosses:</b> Face off against massive foes like "The Storm-Clucker" with unique AI-generated portraits.
+**Firing:** Left-click to launch your current weapon from the bottom of the screen.
 
-<b>🪠 Progressive Weapons:</b>
+Weapon Selection: Click the icons in the bottom-right dock to switch weapons. Note that special weapons require Ammunition.
 
-<b>Level 1: The Trusty Plunger 🪠</b>
+**🪠 The Arsenal**
 
-<b>Level 2: Rapid-Fire Toilet Paper 🧻</b>
+**Standard Plunger:** Infinite ammo. Reliable.
 
-<b>Level 4: The Turd-nado 💩 (Heavy Splash Damage)</b>
+**Toilet Paper (Lvl 2):** Fires 3 streams at once. Great for crowds.
 
-<b>🕹️ Controls</b>
+**Turd Bombs (Lvl 4):** Heavy explosive grenades. Creates a "Turd-nado" splash damage area.
 
-<b>Mouse:</b> Aim your projectile.
+**Edibares (Lvl 3):** Magic gummies that slow enemies to a crawl.
 
-<b>Left Click:</b> Launch a plunger from the bottom of the river.
+**Magic Shrooms (Lvl 5):** The Red & White classic. Stuns enemies, making them dizzy and spin uncontrollably.
 
-<b>Weapon Icons:</b> Click the icons in the bottom right to switch weapons once they are unlocked.
+**🦢 The Enemies**
 
-<b>Created for Heather Joy. ⚡🦆🪠</b>
+River Ducks: The standard grunts.
+
+Heavy Geese: Require multiple hits to sink.
+
+The Black Swan: Fast, erratic, and hard to track.
+
+Bosses: Giant mythological beasts that appear every even level.
+
+**✨ Technical Features**
+
+** bowling Physics**: Ducks bounce off the banks like bowling pins.
+
+Thor-Texas Voice: AI-narrated guidance with a booming mythological drawl.
+
+Imagen 4.0 Portraits: Dynamic AI art for every boss encounter.
+
+Chiptune Country: A procedural 8-bit country soundtrack generated in real-time.
+
+**Created with Pride for Heather. ⚡🌵🥜**
