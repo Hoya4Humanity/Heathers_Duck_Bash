@@ -33,7 +33,6 @@
             z-index: 500; background-size: 100% 4px, 3px 100%; pointer-events: none;
         }
 
-        /* SPA Navigation States */
         .app-screen { display: none; min-height: 100vh; width: 100vw; }
         .app-screen.active { display: flex; flex-direction: column; }
 
@@ -44,13 +43,11 @@
         }
         .btn-nes:active { transform: translate(4px, 4px); box-shadow: 0 0 0 #000; }
 
-        /* Chart Styles */
         .chart-container {
             position: relative; width: 100%; max-width: 500px;
             margin: auto; height: 350px; max-height: 400px;
         }
 
-        /* Game Engine Visuals */
         #river {
             position: relative; width: 75%; height: 100vh;
             background-color: #2e86c1; border-left: 20px solid #1e3f20; border-right: 20px solid #1e3f20;
@@ -66,7 +63,6 @@
         .dizzy-particle { position: absolute; font-size: 12px; pointer-events: none; z-index: 40; animation: float-up 1s ease-out forwards; }
         @keyframes float-up { to { transform: translateY(-60px) rotate(360deg); opacity: 0; } }
 
-        /* Manual UI */
         .manual-bg { background-color: var(--cream); color: var(--dark-coffee); }
         .manual-card { background: white; border: 4px solid var(--dark-coffee); box-shadow: 6px 6px 0 var(--dark-coffee); }
 
@@ -99,7 +95,7 @@
                 <span class="text-3xl animate-bounce">🪠</span>
                 <span class="text-3xl">🦆</span>
             </div>
-            <div class="absolute bottom-2 pixel-font text-[8px] text-yellow-400 tracking-tighter">FLORESVILLE LEGEND</div>
+            <div class="absolute bottom-2 pixel-font text-[8px] text-yellow-400 tracking-tighter uppercase">Floresville Legend</div>
         </div>
     </div>
 
@@ -108,15 +104,15 @@
                class="w-full p-4 bg-black border-4 border-white text-white pixel-font text-center outline-none focus:border-nes-yellow">
         
         <div class="flex flex-col gap-4">
-            <button onclick="window.startGame()" class="btn-nes pixel-font text-sm uppercase">START MISSION</button>
-            <button onclick="window.showManual()" class="bg-white text-black p-3 pixel-font text-[10px] border-4 border-black uppercase">FIELD MANUAL</button>
+            <button id="start-mission-btn" class="btn-nes pixel-font text-sm uppercase">START MISSION</button>
+            <button id="field-manual-btn" class="bg-white text-black p-3 pixel-font text-[10px] border-4 border-black uppercase">FIELD MANUAL</button>
         </div>
     </div>
 
     <div class="mt-12 bg-black/40 p-4 border-t-2 border-white/20 w-full max-w-md">
         <h3 class="pixel-font text-[8px] text-gray-300 mb-4 uppercase">Global Leaderboard</h3>
         <div id="leaderboard-list" class="text-[10px] pixel-font space-y-2 text-yellow-400">
-            Connecting to Frontier...
+            Checking Rankings...
         </div>
     </div>
 </section>
@@ -127,14 +123,14 @@
         <header class="flex justify-between items-center border-b-4 border-[#2d1b0d] pb-6 mb-10">
             <div>
                 <h2 class="pixel-font text-xl text-nes-red uppercase">Tactical Intel</h2>
-                <p class="text-xs font-bold tracking-widest opacity-60 uppercase mt-2">Floresville Frontier Database</p>
+                <p class="text-xs font-bold tracking-widest opacity-60 uppercase mt-2">Frontier Database</p>
             </div>
-            <button onclick="window.showHome()" class="pixel-font text-[10px] bg-black text-white p-3 border-2 border-white uppercase">Exit Manual</button>
+            <button id="exit-manual-btn" class="pixel-font text-[10px] bg-black text-white p-3 border-2 border-white uppercase">Exit Manual</button>
         </header>
 
         <div class="flex gap-4 mb-8">
-            <button onclick="window.switchTab('tab-weapons')" id="btn-tab-weapons" class="px-4 py-2 border-2 border-dark-coffee font-bold text-xs uppercase bg-nes-red text-white">Weapons</button>
-            <button onclick="window.switchTab('tab-foes')" id="btn-tab-foes" class="px-4 py-2 border-2 border-dark-coffee font-bold text-xs uppercase bg-white">Foes</button>
+            <button id="btn-tab-weapons" class="px-4 py-2 border-2 border-dark-coffee font-bold text-xs uppercase bg-nes-red text-white">Weapons</button>
+            <button id="btn-tab-foes" class="px-4 py-2 border-2 border-dark-coffee font-bold text-xs uppercase bg-white">Foes</button>
         </div>
 
         <div id="tab-weapons" class="manual-tab block">
@@ -145,10 +141,6 @@
                 <div class="space-y-6">
                     <h3 class="font-bold text-lg border-b-2 border-dark-coffee pb-2 uppercase tracking-tighter">Strategic Analysis</h3>
                     <p class="text-sm leading-relaxed">Your effectiveness depends on ammo conservation. **Shrooms** cause boss disorientation, while **Edibares** are essential for slowing the **Black Swan**.</p>
-                    <div class="bg-[#f1c40f]/20 p-4 border-l-4 border-[#f1c40f]">
-                        <span class="text-xs font-bold uppercase block mb-1">Combat Tip</span>
-                        <p class="text-xs">Turd Bombs have the widest AOE but slowest travel speed. Aim ahead of the target!</p>
-                    </div>
                 </div>
             </div>
         </div>
@@ -158,17 +150,17 @@
                 <div class="manual-card p-4">
                     <span class="text-4xl block mb-2">🦆</span>
                     <h4 class="font-bold uppercase text-sm mb-1">Standard Duck</h4>
-                    <p class="text-xs opacity-70 italic">1 HP - Consistent speed.</p>
+                    <p class="text-xs opacity-70 italic">1 HP - Easy target.</p>
                 </div>
                 <div class="manual-card p-4">
                     <span class="text-4xl block mb-2">🦢🖤</span>
                     <h4 class="font-bold uppercase text-sm mb-1">Black Swan</h4>
-                    <p class="text-xs opacity-70 italic">5 HP - Erratic physical bounce.</p>
+                    <p class="text-xs opacity-70 italic">5 HP - Very fast.</p>
                 </div>
                 <div class="manual-card p-4">
                     <span class="text-4xl block mb-2">🦖⚡</span>
                     <h4 class="font-bold uppercase text-sm mb-1">Thunder Boss</h4>
-                    <p class="text-xs opacity-70 italic">Varies - Requires status effects.</p>
+                    <p class="text-xs opacity-70 italic">Varies - Stun highly recommended.</p>
                 </div>
             </div>
         </div>
@@ -186,10 +178,8 @@
             <div class="mt-1">LEVEL: <span id="game-level">1</span></div>
         </div>
         <div class="bg-black/80 border-2 border-white p-3 text-white pixel-font text-[8px] pointer-events-auto text-right">
-            <div>🧻 TP: <span id="ammo-tp">0</span></div>
-            <div>💩 TRD: <span id="ammo-turd">0</span></div>
-            <div>🧸 SLW: <span id="ammo-edibare">0</span></div>
-            <div>🍄 STN: <span id="ammo-shroom">0</span></div>
+            <div>🧻 TP: <span id="ammo-tp">0</span> | 💩 TRD: <span id="ammo-turd">0</span></div>
+            <div class="mt-1 text-yellow-400">🧸 SLW: <span id="ammo-edibare">0</span> | 🍄 STN: <span id="ammo-shroom">0</span></div>
         </div>
     </div>
 
@@ -199,20 +189,20 @@
     </div>
 
     <div id="game-weapon-dock" class="absolute bottom-4 right-4 flex gap-2 z-[100]">
-        <div onclick="window.selectWeapon('plunger')" id="btn-w-plunger" class="weapon-btn active p-2 border-2 border-white bg-black/60 cursor-pointer">🪠</div>
-        <div onclick="window.selectWeapon('tp')" id="btn-w-tp" class="weapon-btn opacity-20 p-2 border-2 border-white bg-black/60 cursor-pointer">🧻</div>
-        <div onclick="window.selectWeapon('turd')" id="btn-w-turd" class="weapon-btn opacity-20 p-2 border-2 border-white bg-black/60 cursor-pointer">💩</div>
-        <div onclick="window.selectWeapon('edibare')" id="btn-w-edibare" class="weapon-btn opacity-20 p-2 border-2 border-white bg-black/60 cursor-pointer">🧸</div>
-        <div onclick="window.selectWeapon('shroom')" id="btn-w-shroom" class="weapon-btn opacity-20 p-2 border-2 border-white bg-black/60 cursor-pointer">🍄</div>
+        <div id="btn-w-plunger" class="weapon-btn active p-2 border-2 border-nes-yellow bg-black/60 cursor-pointer">🪠</div>
+        <div id="btn-w-tp" class="weapon-btn opacity-20 p-2 border-2 border-white bg-black/60 cursor-pointer">🧻</div>
+        <div id="btn-w-turd" class="weapon-btn opacity-20 p-2 border-2 border-white bg-black/60 cursor-pointer">💩</div>
+        <div id="btn-w-edibare" class="weapon-btn opacity-20 p-2 border-2 border-white bg-black/60 cursor-pointer">🧸</div>
+        <div id="btn-w-shroom" class="weapon-btn opacity-20 p-2 border-2 border-white bg-black/60 cursor-pointer">🍄</div>
     </div>
 
     <div id="game-narrative" class="absolute inset-0 bg-black/95 z-[1000] flex flex-col items-center justify-center p-10 hidden">
         <div id="boss-portrait" class="w-40 h-40 border-4 border-nes-yellow mb-4 bg-gray-800"></div>
         <div class="max-w-md bg-white text-black p-6 border-4 border-nes-red relative shadow-[8px_8px_0_#e40058]">
-            <div class="absolute -top-3 left-4 bg-nes-red text-white text-[8px] px-2 pixel-font">THUNDER MALLARD</div>
-            <p id="narrative-text" class="text-sm leading-relaxed font-bold">Hark, Heather! The river demands thy bash!</p>
+            <div class="absolute -top-3 left-4 bg-nes-red text-white text-[8px] px-2 pixel-font uppercase">Thunder Mallard</div>
+            <p id="narrative-text" class="text-sm leading-relaxed font-bold">The frontier demands thy plunger!</p>
         </div>
-        <button onclick="window.closeNarrative()" class="pixel-btn btn-nes mt-8 pixel-font text-[10px] uppercase">Ride Forth</button>
+        <button id="close-narrative-btn" class="pixel-btn btn-nes mt-8 pixel-font text-[10px] uppercase">Ride Forth</button>
     </div>
 </section>
 
@@ -221,12 +211,18 @@
     import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // --- INITIALIZATION ---
-    const firebaseConfig = JSON.parse(__firebase_config);
+    // --- FAIL-SAFE CONFIG ---
+    let firebaseConfig = { apiKey: "AIzaSyD-offline", authDomain: "null", projectId: "null" };
+    try {
+        if (typeof __firebase_config !== 'undefined') {
+            firebaseConfig = JSON.parse(__firebase_config);
+        }
+    } catch (e) { console.warn("Offline mode enabled."); }
+    
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'heathers-duck-bash-final-v6';
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'heathers-duck-bash-prod';
     const apiKey = ""; 
 
     let chartInstance = null;
@@ -234,32 +230,42 @@
 
     let gameState = {
         score: 0, level: 1, lives: 3, active: false,
-        ammo: { tp: 0, turd: 0, edibare: 0, shroom: 0 },
+        ammo: { tp: 10, turd: 5, edibare: 2, shroom: 1 },
         currentWeapon: 'plunger',
         ducks: [], projectiles: [], killsInLevel: 0,
-        userName: "HEATHER", audioCtx: null, musicStarted: false
+        userName: "HEATHER", audioCtx: null
     };
 
-    // --- APP NAVIGATION (WINDOW SCOPED) ---
-    window.showManual = () => {
+    // --- CORE NAVIGATION (MODULE INTERNAL) ---
+    const showManual = () => {
         document.getElementById('screen-home').classList.remove('active');
         document.getElementById('screen-manual').classList.add('active');
-        renderManualCharts();
+        switchTab('tab-weapons');
+        setTimeout(renderManualCharts, 100);
     };
 
-    window.showHome = () => {
+    const showHome = () => {
         document.getElementById('screen-manual').classList.remove('active');
         document.getElementById('screen-home').classList.add('active');
     };
 
-    window.switchTab = (tabId) => {
-        document.querySelectorAll('.manual-tab').forEach(t => t.classList.replace('block', 'hidden'));
-        document.getElementById(tabId).classList.replace('hidden', 'block');
-        document.querySelectorAll('.manual-bg button').forEach(b => b.classList.remove('bg-nes-red', 'text-white'));
-        document.getElementById('btn-' + tabId).classList.add('bg-nes-red', 'text-white');
+    const switchTab = (tabId) => {
+        document.querySelectorAll('.manual-tab').forEach(t => t.classList.add('hidden'));
+        document.getElementById(tabId).classList.remove('hidden');
+        document.getElementById(tabId).classList.add('block');
+        
+        document.querySelectorAll('#screen-manual button').forEach(b => {
+            b.classList.remove('bg-nes-red', 'text-white');
+            b.classList.add('bg-white', 'text-dark-coffee');
+        });
+        const activeBtn = document.getElementById('btn-' + tabId);
+        if(activeBtn) {
+            activeBtn.classList.remove('bg-white');
+            activeBtn.classList.add('bg-nes-red', 'text-white');
+        }
     };
 
-    window.startGame = () => {
+    const startGame = () => {
         const input = document.getElementById('username-input');
         if(!input.value.trim()) return alert("Enter thy name, pilot!");
         gameState.userName = input.value.trim();
@@ -268,18 +274,34 @@
         initGameEngine();
     };
 
+    // --- ATTACH TO WINDOW FOR HTML ONCLICK ---
+    window.showManual = showManual;
+    window.showHome = showHome;
+    window.switchTab = switchTab;
+    window.startGame = startGame;
+
+    // --- BUTTON EVENT LISTENERS (BACKUP) ---
+    document.getElementById('start-mission-btn').addEventListener('click', startGame);
+    document.getElementById('field-manual-btn').addEventListener('click', showManual);
+    document.getElementById('exit-manual-btn').addEventListener('click', showHome);
+    document.getElementById('btn-tab-weapons').onclick = () => switchTab('tab-weapons');
+    document.getElementById('btn-tab-foes').onclick = () => switchTab('tab-foes');
+
     // --- LEADERBOARD & AUTH ---
     const initAuth = async () => {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-            await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-            await signInAnonymously(auth);
-        }
+        try {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        } catch (e) { console.error("Cloud features unavailable."); }
     };
     initAuth();
-    onAuthStateChanged(auth, u => { user = u; if(u) fetchScores(); });
+    onAuthStateChanged(auth, u => { user = u; if(u && firebaseConfig.projectId !== "null") fetchScores(); });
 
     function fetchScores() {
+        if(firebaseConfig.projectId === "null") return;
         const col = collection(db, 'artifacts', appId, 'public', 'data', 'scores');
         onSnapshot(col, snap => {
             let s = []; snap.forEach(d => s.push(d.data()));
@@ -344,7 +366,8 @@
             gameState.ducks.forEach((d, di) => {
                 if(Math.abs(p.x-d.x)<50 && Math.abs(p.y-d.y)<50) {
                     if(d.hit(p.type, p.dmg)) { if(!d.isBoss) gameState.killsInLevel++; gameState.ducks.splice(di,1); }
-                    p.el.remove(); gameState.projectiles.splice(pi,1);
+                    if(p.el.parentNode) p.el.remove();
+                    gameState.projectiles.splice(pi,1);
                 }
             });
         });
@@ -367,7 +390,7 @@
     function updateHUD() {
         document.getElementById('game-score').innerText = gameState.score.toString().padStart(5,'0');
         document.getElementById('game-level').innerText = gameState.level;
-        document.getElementById('game-lives').innerText = '❤️'.repeat(gameState.lives);
+        document.getElementById('game-lives').innerText = '❤️'.repeat(Math.max(0, gameState.lives));
         document.getElementById('ammo-tp').innerText = gameState.ammo.tp;
         document.getElementById('ammo-turd').innerText = gameState.ammo.turd;
         document.getElementById('ammo-edibare').innerText = gameState.ammo.edibare;
@@ -399,6 +422,7 @@
         gameState.active = false;
         document.getElementById('game-narrative').classList.remove('hidden');
         if(isBoss) generateBossImg();
+        if(!apiKey) return;
         try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -423,10 +447,9 @@
     }
 
     window.closeNarrative = () => { document.getElementById('game-narrative').classList.add('hidden'); gameState.active = true; spawnHorde(); };
+    document.getElementById('close-narrative-btn').onclick = window.closeNarrative;
 
     function spawnHorde() { for(let i=0; i<5; i++) gameState.ducks.push(new Duck(false)); }
-    function spawnBoss() { gameState.ducks.push(new Duck(true)); }
-
     function updateUnlocks() {
         if(gameState.level>=2) document.getElementById('btn-w-tp').style.opacity='1';
         if(gameState.level>=3) document.getElementById('btn-w-edibare').style.opacity='1';
@@ -436,6 +459,7 @@
 
     function initFlowers() {
         const l = document.getElementById('bank-flowers-left'), r = document.getElementById('bank-flowers-right');
+        l.innerHTML = ''; r.innerHTML = '';
         for(let i=0; i<30; i++) {
             const f = document.createElement('div'); f.className='bank-flower';
             f.style.top = Math.random()*100+'%'; f.style.left = Math.random()*80+'%';
@@ -445,7 +469,11 @@
 
     async function endGame() {
         gameState.active = false;
-        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'scores'), { name: gameState.userName, score: gameState.score, timestamp: Date.now() });
+        if(firebaseConfig.projectId !== "null") {
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'scores'), { name: gameState.userName, score: gameState.score, timestamp: Date.now() });
+            } catch(e) {}
+        }
         alert("GAME OVER! Final Score: " + gameState.score);
         location.reload();
     }
@@ -462,7 +490,7 @@
                     { label: 'Shroom', data: [10, 10, 100, 50, 60], borderColor: '#f8b800', backgroundColor: 'rgba(248, 184, 0, 0.2)' }
                 ]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { responsive: true, maintainAspectRatio: false, scales: { r: { min: 0, max: 100 } } }
         });
     }
 
